@@ -16,11 +16,19 @@
 
 RCT_EXPORT_MODULE();
 
++ (BOOL)requiresMainQueueSetup {
+    return NO;
+}
+
+- (dispatch_queue_t)methodQueue {
+    return dispatch_get_main_queue();
+}
+
 #pragma mark SupportedEvents
 
 - (NSArray<NSString *> *)supportedEvents {
     
-  return @[@"UpshotDeepLink"];
+    return @[@"UpshotDeepLink",@"UpshotActivityDidAppear", @"UpshotActivityWillAppear", @"UpshotActivityDidDismiss", @"UpshotAuthentication"];
 }
 
 #pragma mark Initialize Upshot
@@ -41,20 +49,32 @@ RCT_EXPORT_METHOD(initializeUpshotUsingConfigFile) {
 
 #pragma mark PageViewEvent
 
-RCT_EXPORT_METHOD(createPageviewEvent:(NSString *_Nonnull) currentPage) {
+RCT_EXPORT_METHOD(createPageViewEvent:(NSString *_Nonnull)currentPage callback:(RCTResponseSenderBlock)callback) {
     
     if (currentPage && ![currentPage isEqualToString:@""]) {
-      NSString *eventId = [[BrandKinesis sharedInstance] createEvent:BKPageViewNative params:@{BKCurrentPage: currentPage} isTimed:YES];
+        NSString *eventId = [[BrandKinesis sharedInstance] createEvent:BKPageViewNative params:@{BKCurrentPage: currentPage} isTimed:YES];
+        if (eventId) {
+            [self returnResponse:eventId withCallback:callback andError:nil];
+        } else {
+            [self returnResponse:nil withCallback:callback andError:@"failed to create pageView event"];
+        }
     }
 }
 
 #pragma mark CustomEvent
 
-RCT_EXPORT_METHOD(createCustomEvent:(NSString *_Nonnull)eventName payload:(NSString *_Nonnull)payload timed:(BOOL)isTimed) {
+RCT_EXPORT_METHOD(createCustomEvent:(NSString *_Nonnull)eventName payload:(NSString *_Nonnull)payload timed:(BOOL)isTimed callback:(RCTResponseSenderBlock)callback) {
     
     if (eventName && ![eventName isEqualToString: @""]) {
         NSDictionary *params = [self convertJsonStringToJson:payload];
         NSString *eventId = [[BrandKinesis sharedInstance] createEvent:eventName params:params isTimed:isTimed];
+        if (eventId) {
+            [self returnResponse:eventId withCallback:callback andError:nil];
+        } else {
+            [self returnResponse:nil withCallback:callback andError:@"failed to create custom event"];
+        }
+    } else {
+        [self returnResponse:nil withCallback:callback andError:@"failed to create custom event"];
     }
 }
 
@@ -122,13 +142,13 @@ RCT_EXPORT_METHOD(removeTutorials) {
 RCT_EXPORT_METHOD(getUserBadges:(RCTResponseSenderBlock)callback) {
     
     NSDictionary *userBadges = [[BrandKinesis sharedInstance] getUserBadges];
-    callback(@[userBadges]);
+    [self returnResponse:userBadges withCallback:callback andError:nil];
 }
 
 RCT_EXPORT_METHOD(fetchInboxInfo:(RCTResponseSenderBlock)callback) {
     
     [[BrandKinesis sharedInstance] fetchInboxInfoWithCompletionBlock:^(NSArray * _Nonnull inbox) {
-        callback(inbox);
+        [self returnResponse:inbox withCallback:callback andError:nil];
     }];
 }
 
@@ -145,7 +165,7 @@ RCT_EXPORT_METHOD(setUserProfile:(NSString *_Nonnull)userData) {
 RCT_EXPORT_METHOD(getUserDetails:(NSArray *)keys details:(RCTResponseSenderBlock)callback) {
         
     NSDictionary *userDetails = [[BrandKinesis sharedInstance] getUserDetails:keys];
-    callback(@[userDetails]);
+    [self returnResponse:userDetails withCallback:callback andError:nil];
 }
 
 #pragma mark PushNotifications
@@ -184,7 +204,7 @@ RCT_EXPORT_METHOD(disableUser:(BOOL)shouldDisable) {
 RCT_EXPORT_METHOD(getUserId:(RCTResponseSenderBlock)callback) {
     
     NSString *userId = [[BrandKinesis sharedInstance] getUserId];
-    callback(@[userId]);
+    [self returnResponse:userId withCallback:callback andError:nil];
 }
 
 #pragma mark SDK Vesrion
@@ -192,7 +212,7 @@ RCT_EXPORT_METHOD(getUserId:(RCTResponseSenderBlock)callback) {
 RCT_EXPORT_METHOD(getSDKVersion:(RCTResponseSenderBlock)callback) {
     
     NSString *version = [BrandKinesis sharedInstance].version;
-    callback(@[version]);
+    [self returnResponse:version withCallback:callback andError:nil];
 }
 
 #pragma mark Rewards
@@ -203,7 +223,7 @@ RCT_EXPORT_METHOD(getRewardsList:(RCTResponseSenderBlock)callback) {
         
         NSString *error = errorMessage ? errorMessage : @"";
         NSDictionary *result = response ? result : @{};
-        callback(@[result, error]);
+        [self returnResponse:result withCallback:callback andError:error];
     }];
 }
 
@@ -213,7 +233,7 @@ RCT_EXPORT_METHOD(getRewardHistoryForProgram:(NSString *)programId historyType:(
         
         NSString *error = errorMessage ? errorMessage : @"";
         NSDictionary *result = response ? result : @{};
-        callback(@[result, error]);
+        [self returnResponse:result withCallback:callback andError:error];
     }];
 }
 
@@ -224,7 +244,7 @@ RCT_EXPORT_METHOD(getRewardRulesforProgram:(NSString *)programId callback:(RCTRe
         
         NSString *error = errorMessage ? errorMessage : @"";
         NSDictionary *result = response ? result : @{};
-        callback(@[result, error]);
+        [self returnResponse:result withCallback:callback andError:error];
     }];
 }
 
@@ -234,7 +254,7 @@ RCT_EXPORT_METHOD(redeemRewardsForProgram:(NSString *)programId transactionAmoun
         
         NSString *error = errorMessage ? errorMessage : @"";
         NSDictionary *result = response ? result : @{};
-        callback(@[result, error]);
+        [self returnResponse:result withCallback:callback andError:error];
     }];
 }
 
@@ -249,7 +269,7 @@ RCT_EXPORT_METHOD(terminate) {
 #pragma mark Authentication Delegate
 
 - (void)brandKinesisAuthentication:(BrandKinesis *)brandKinesis withStatus:(BOOL)status error:(NSError *)error {
-        
+        [self sendEventWithName:@"UpshotAuthentication" body:@{@"status": [NSNumber numberWithBool:status]}];
 }
 
 #pragma mark Activity Delegates
@@ -404,7 +424,16 @@ RCT_EXPORT_METHOD(terminate) {
   }
   
   return  @"Others";
-  
+}
+
+- (void)returnResponse:(id)response withCallback:(RCTResponseSenderBlock)callback andError:(NSString *)error {
+    if (callback == nil) {
+        RCTLogInfo(@"Upshot callback was nil");
+        return;
+    }
+    id e  = error != nil ? error : [NSNull null];
+    id r  = response != nil ? response : [NSNull null];
+    callback(@[e,r]);
 }
 
 @end
