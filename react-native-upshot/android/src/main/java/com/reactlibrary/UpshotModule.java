@@ -85,24 +85,35 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    private void createPageviewEvent(String PageName) {
+    private void createPageviewEvent(String PageName, Callback errorCallback, Callback successCallback) {
+
         HashMap<String, Object> pageData = new HashMap<>();
         pageData.put(BrandKinesis.BK_CURRENT_PAGE, PageName);
         BrandKinesis bkInstance = BrandKinesis.getBKInstance();
-
-        bkInstance.createEvent(BKProperties.BKPageViewEvent.NATIVE, pageData, true);
-
+        String eventID = bkInstance.createEvent(BKProperties.BKPageViewEvent.NATIVE, pageData, true);
+        if(eventID != null && !eventID.equals("")) {
+            successCallback(eventID);
+        } else {
+            errorCallback("failed to create pageView event");
+        }
     }
 
     @ReactMethod
-    private void createCustomEvent(String eventName, String eventPayload) {
+    private void createCustomEvent(String eventName, String eventPayload, boolean isTimed, Callback errorCallback, Callback successCallback) {
 
         try {
             JSONObject jeventPayload = new JSONObject(eventPayload);
-            String eventID = BrandKinesis.getBKInstance().createEvent(eventName, jsonToHashMap(jeventPayload), false);
-            Log.i("RNTestLibraryModule", "eventId" + eventID);
+            String eventID = BrandKinesis.getBKInstance().createEvent(eventName, jsonToHashMap(jeventPayload), isTimed);
+
+            if(eventID != null && !eventID.equals("")) {
+                successCallback(eventID);
+            } else {
+                errorCallback("failed to create custom event");
+            }
+    
         } catch (JSONException e) {
             e.printStackTrace();
+            errorCallback("failed to create custom event");
         }
     }
 
@@ -154,12 +165,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         try {
 
             final JSONObject providedJson = new JSONObject(userData);
-
-            Map<String/* unity */, String/* bk */> predefinedKeys = new HashMap<>();
-            predefinedKeys.put("email", BKUserInfo.BKUserData.EMAIL);
-            predefinedKeys.put("appuID", BKUserInfo.BKExternalIds.APPUID);
-            predefinedKeys.put("userName", BKUserInfo.BKUserData.USER_NAME);
-            JSONObject othersJson = new JSONObject();
+            
             Bundle bundle = new Bundle();
             final Iterator<String> keys = providedJson.keys();
             while (keys.hasNext()) {
@@ -209,8 +215,8 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     @ReactMethod
     private void fetchInboxDetails(final String isLeadResponse) {
 
-        BrandKinesis bkInstanceForBadges = BrandKinesis.getBKInstance();
-        bkInstanceForBadges.fetchInboxInfo(new BKInboxAccessListener() {
+        BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        bkInstance.fetchInboxInfo(new BKInboxAccessListener() {
             @Override
             public void onMessagesAvailable(List<HashMap<String, Object>> messages) {
 
