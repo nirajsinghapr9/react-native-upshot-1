@@ -33,10 +33,10 @@ RCT_EXPORT_MODULE();
 
 #pragma mark Initialize Upshot
  
-RCT_EXPORT_METHOD(initializeUpshotWithOptions:(NSString *)options) {
+RCT_EXPORT_METHOD(initializeUpshotWithOptions:(NSDictionary *)options) {
     
-    NSDictionary *initOptions = [self convertJsonStringToJson:options];
-    [[BrandKinesis sharedInstance] initializeWithOptions:initOptions delegate:self];
+    // NSDictionary *initOptions = [self convertJsonStringToJson:options];
+    [[BrandKinesis sharedInstance] initializeWithOptions:options delegate:self];
     UpshotCustomization *customization = [[UpshotCustomization alloc] init];
     [[BKUIPreferences preferences] setDelegate:customization];
 }
@@ -63,11 +63,11 @@ RCT_EXPORT_METHOD(createPageViewEvent:(NSString *_Nonnull)currentPage callback:(
 
 #pragma mark CustomEvent
 
-RCT_EXPORT_METHOD(createCustomEvent:(NSString *_Nonnull)eventName payload:(NSString *_Nonnull)payload timed:(BOOL)isTimed callback:(RCTResponseSenderBlock)callback) {
+RCT_EXPORT_METHOD(createCustomEvent:(NSString *_Nonnull)eventName payload:(NSDictionary *_Nonnull)payload timed:(BOOL)isTimed callback:(RCTResponseSenderBlock)callback) {
     
     if (eventName && ![eventName isEqualToString: @""]) {
-        NSDictionary *params = [self convertJsonStringToJson:payload];
-        NSString *eventId = [[BrandKinesis sharedInstance] createEvent:eventName params:params isTimed:isTimed];
+        // NSDictionary *params = [self convertJsonStringToJson:payload];
+        NSString *eventId = [[BrandKinesis sharedInstance] createEvent:eventName params:payload isTimed:isTimed];
         if (eventId) {
             [self returnResponse:eventId withCallback:callback andError:nil];
         } else {
@@ -89,10 +89,10 @@ RCT_EXPORT_METHOD(createLocationEvent:(NSString *_Nonnull)latitude longitude:(NS
 
 #pragma mark Close And Dispatch Events
 
-RCT_EXPORT_METHOD(setValueAndClose:(NSString *_Nonnull)payload forEvent:(NSString *_Nonnull)eventId) {
+RCT_EXPORT_METHOD(setValueAndClose:(NSDictionary *_Nonnull)payload forEvent:(NSString *_Nonnull)eventId) {
     
-    NSDictionary *params = [self convertJsonStringToJson:payload];
-    [[BrandKinesis sharedInstance] setValueAndClose:params forEvent:eventId];
+    // NSDictionary *params = [self convertJsonStringToJson:payload];
+    [[BrandKinesis sharedInstance] setValueAndClose:payload forEvent:eventId];
 }
 
 RCT_EXPORT_METHOD(closeEventForId:(NSString *_Nonnull)eventId) {
@@ -154,7 +154,7 @@ RCT_EXPORT_METHOD(fetchInboxInfo:(RCTResponseSenderBlock)callback) {
 
 #pragma mark UserProfile
 
-RCT_EXPORT_METHOD(setUserProfile:(NSString *_Nonnull)userData) {
+RCT_EXPORT_METHOD(setUserProfile:(NSDictionary *_Nonnull)userData) {
      
      NSDictionary *userDict = [self convertJsonStringToJson:userData];
      [self buildUserInfoForParams:userDict];
@@ -179,13 +179,13 @@ RCT_EXPORT_METHOD(sendDeviceToken:(NSString *)token) {
     [userInfo buildUserInfoWithCompletionBlock:nil];
 }
 
-RCT_EXPORT_METHOD(sendPushClickDetails:(NSString *)pushDetails) {
+RCT_EXPORT_METHOD(sendPushClickDetails:(NSDictionary *)pushDetails) {
     
     NSDictionary *payload = [self convertJsonStringToJson:pushDetails];
     [[BrandKinesis sharedInstance] handlePushNotificationWithParams:payload withCompletionBlock:nil];
 }
 
-RCT_EXPORT_METHOD(sendPushNotificationWithDetails:(NSString *)pushDetails) {
+RCT_EXPORT_METHOD(sendPushNotificationWithDetails:(NSDictionary *)pushDetails) {
     
     NSDictionary *payload = [self convertJsonStringToJson:pushDetails];
     [[BrandKinesis sharedInstance] sendPushDetails:payload withCompletionBlock:nil];
