@@ -411,7 +411,7 @@ RCT_EXPORT_METHOD(terminate) {
 
 - (void)getPushPayload:(NSDictionary *)payload {
   
-    [self sendEventWithName:@"UpshotPushPayload" body:@{@"payload": [self convertToJsonString:userDetails]}];
+    [self sendEventWithName:@"UpshotPushPayload" body:@{@"payload": [self convertToJsonString:payload]}];
     [[BrandKinesis sharedInstance] handlePushNotificationWithParams:payload withCompletionBlock:nil];
 }
 
