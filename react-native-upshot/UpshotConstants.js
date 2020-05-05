@@ -1,6 +1,6 @@
 
-const UpshotProfileAttribute = {
-    
+var UpshotProfileAttribute = {
+
     firstName: 'firstName',
     lastName: 'lastName',
     middleName: 'middleName',
@@ -51,5 +51,6 @@ const UpshotActivityType = {
 }
 
 
-module.exports = UpshotActivityType
+export default UpshotActivityType
+
 module.exports = UpshotProfileAttribute

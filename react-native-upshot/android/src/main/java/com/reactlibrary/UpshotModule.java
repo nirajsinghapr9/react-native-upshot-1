@@ -1,10 +1,13 @@
 package com.reactlibrary;
 
+import android.os.Build;
+import android.os.Bundle;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.os.Bundle;
-import android.support.annotation.Nullable;
+
+import android.telecom.Call;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -16,27 +19,45 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+
 import com.brandkinesis.BKProperties;
 import com.brandkinesis.BKUIPrefComponents;
 import com.brandkinesis.BKUserInfo;
 import com.brandkinesis.BrandKinesis;
 import com.brandkinesis.activitymanager.BKActivityTypes;
 import com.brandkinesis.callback.BKActivityCallback;
+import com.brandkinesis.callback.BKAuthCallback;
+import com.brandkinesis.callback.BKBadgeAccessListener;
 import com.brandkinesis.callback.BKDispatchCallback;
 import com.brandkinesis.callback.BKInboxAccessListener;
+import com.brandkinesis.callback.BKPushCompletionBlock;
 import com.brandkinesis.callback.BKUserInfoCallback;
+import com.brandkinesis.callback.BrandKinesisUserStateCompletion;
 import com.brandkinesis.rewards.BKRewardsResponseListener;
 import com.brandkinesis.utils.BKUtilLogger;
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.WritableNativeArray;
+import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.facebook.react.bridge.Callback;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.upshot.MainApplication;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -48,9 +69,10 @@ import static com.facebook.react.bridge.UiThreadUtil.runOnUiThread;
 public class UpshotModule extends ReactContextBaseJavaModule {
 
     public static final String REACT_CLASS = "UpshotReact";
+    private static final String TAG = UpshotModule.class.getSimpleName();
     public static ReactApplicationContext reactContext;
 
-    public UpshotModule(ReactApplicationContext reactContext) {
+    public UpshotModule(final ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
     }
@@ -60,113 +82,131 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         return REACT_CLASS;
     }
 
-    private static void emitDeviceEvent(String eventName, @Nullable WritableMap eventData) {
+    private static void emitDeviceEvent(final String eventName, @Nullable final WritableMap eventData) {
         // A method for emitting from the native side to JS
         // https://facebook.github.io/react-native/docs/native-modules-android.html#sending-events-to-javascript
-        reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, eventData);
+        if (reactContext != null) reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, eventData);
     }
+
+    /* React Methods */
 
     @ReactMethod
     public void initializeUpshot() {
-        /*
-         * try { BrandKinesis.initialiseBrandKinesis(MainApplication.getContext(), new
-         * BKAuthCallback() {
-         *
-         * @Override public void onAuthenticationError(String s) {
-         *
-         * }
-         *
-         * @Override public void onAuthenticationSuccess() {
-         *
-         * } }); } catch (Exception e) { e.printStackTrace(); }
-         */
 
-        Log.i("RNTestLibraryModule", "show");
     }
 
+    /* Events Module */
     @ReactMethod
-    private void createPageviewEvent(String PageName, Callback errorCallback, Callback successCallback) {
+    private void createPageViewEvent(final String PageName, Callback callback) {
 
-        HashMap<String, Object> pageData = new HashMap<>();
+        final HashMap<String, Object> pageData = new HashMap<>();
         pageData.put(BrandKinesis.BK_CURRENT_PAGE, PageName);
-        BrandKinesis bkInstance = BrandKinesis.getBKInstance();
-        String eventID = bkInstance.createEvent(BKProperties.BKPageViewEvent.NATIVE, pageData, true);
-        if(eventID != null && !eventID.equals("")) {
-            successCallback(eventID);
-        } else {
-            errorCallback("failed to create pageView event");
-        }
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        final String eventID = bkInstance.createEvent(BKProperties.BKPageViewEvent.NATIVE, pageData, true);
+        callback.invoke(eventID);
     }
 
     @ReactMethod
-    private void createCustomEvent(String eventName, String eventPayload, boolean isTimed, Callback errorCallback, Callback successCallback) {
+    private void createCustomEvent(final String eventName, final String eventPayload, final boolean isTimed, Callback callback) {
 
         try {
-            JSONObject jeventPayload = new JSONObject(eventPayload);
-            String eventID = BrandKinesis.getBKInstance().createEvent(eventName, jsonToHashMap(jeventPayload), isTimed);
+            final JSONObject jeventPayload = new JSONObject(eventPayload);
+            final String eventID = BrandKinesis.getBKInstance().createEvent(eventName, jsonToHashMap(jeventPayload),
+                    isTimed);
+            callback.invoke(eventID);
 
-            if(eventID != null && !eventID.equals("")) {
-                successCallback(eventID);
-            } else {
-                errorCallback("failed to create custom event");
-            }
-    
-        } catch (JSONException e) {
-            e.printStackTrace();
-            errorCallback("failed to create custom event");
-        }
-    }
-
-    @ReactMethod
-    private void dispatchEventsWithTimedEvents(Context context, boolean forceCloseTimedEvents) {
-        try {
-            BrandKinesis.getBKInstance().dispatchNow(context, forceCloseTimedEvents, new BKDispatchCallback() {
-                @Override
-                public void onDispatchComplete(boolean status) {
-
-                }
-            });
-        } catch (Exception e) {
+        } catch (final JSONException e) {
             e.printStackTrace();
         }
     }
 
     @ReactMethod
-    private void setValueAndClose(String payload, String eventId) {
+    private void setValueAndClose(final String payload, final String eventId) {
         try {
-            JSONObject jeventPayload = new JSONObject(payload);
+            final JSONObject jeventPayload = new JSONObject(payload);
             BrandKinesis.getBKInstance().closeEvent(eventId, jsonToHashMap(jeventPayload));
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
     }
 
     @ReactMethod
-    private void closeEventForId(String eventId) {
+    private void closeEventForId(final String eventId) {
         try {
             BrandKinesis.getBKInstance().closeEvent(eventId);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
     }
 
     @ReactMethod
-    private void createLocationEvent(String latitude, String longitude) {
+    private void dispatchEventsWithTimedEvents(final boolean timed, Callback callback) {
         try {
-            String eventID = BrandKinesis.getBKInstance().createLocationEvent(Double.parseDouble(latitude), Double.parseDouble(longitude));
+            BrandKinesis.getBKInstance().dispatchNow(MainApplication.context, timed, new BKDispatchCallback() {
+                @Override
+                public void onDispatchComplete(final boolean status) {
+                    callback.invoke(status);
+                }
+            });
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @ReactMethod
+    private void createLocationEvent(final String latitude, final String longitude) {
+        try {
+            final String eventID = BrandKinesis.getBKInstance().createLocationEvent(Double.parseDouble(latitude),
+                    Double.parseDouble(longitude));
             Log.i("createLocationEvent", "eventId" + eventID);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
     }
 
+    /* Profile Module */
     @ReactMethod
-    private void setUserProfile(String userData) {
-        try {
+    private void setUserProfile(final String userData, Callback callback) {
 
-            final JSONObject providedJson = new JSONObject(userData);
-            
+        Map<String, String> predefinedKeys = new HashMap<>();
+        predefinedKeys.put("lastName", BKUserInfo.BKUserData.LAST_NAME);
+        predefinedKeys.put("middleName", BKUserInfo.BKUserData.MIDDLE_NAME);
+        predefinedKeys.put("firstName", BKUserInfo.BKUserData.FIRST_NAME);
+        predefinedKeys.put("language", BKUserInfo.BKUserData.LANGUAGE);
+        predefinedKeys.put("occupation", BKUserInfo.BKUserData.OCCUPATION);
+        predefinedKeys.put("qualification", BKUserInfo.BKUserData.QUALIFICATION);
+        predefinedKeys.put("phone", BKUserInfo.BKUserData.PHONE);
+        predefinedKeys.put("localeCode", BKUserInfo.BKUserData.LOCALE_CODE);
+        predefinedKeys.put("userName", BKUserInfo.BKUserData.USER_NAME);
+        predefinedKeys.put("email", BKUserInfo.BKUserData.EMAIL);
+        predefinedKeys.put("appuID", BKUserInfo.BKExternalIds.APPUID);
+        predefinedKeys.put("facebookID", BKUserInfo.BKExternalIds.FACEBOOK);
+        predefinedKeys.put("twitterID", BKUserInfo.BKExternalIds.TWITTER);
+        predefinedKeys.put("foursquareID", BKUserInfo.BKExternalIds.FOURSQUARE);
+        predefinedKeys.put("linkedinID", BKUserInfo.BKExternalIds.LINKEDIN);
+        predefinedKeys.put("googleplusID", BKUserInfo.BKExternalIds.GOOGLEPLUS);
+        predefinedKeys.put("enterpriseUID", BKUserInfo.BKExternalIds.ENTERPRISE_UID);
+        predefinedKeys.put("advertisingID", BKUserInfo.BKExternalIds.ADVERTISING_ID);
+        predefinedKeys.put("instagramID", BKUserInfo.BKExternalIds.INSTAGRAM);
+        predefinedKeys.put("pinterest", BKUserInfo.BKExternalIds.PINTEREST);
+        predefinedKeys.put("token", BKUserInfo.BKExternalIds.GCM);
+        predefinedKeys.put("gender", BKUserInfo.BKUserData.GENDER);
+        predefinedKeys.put("maritalStatus", BKUserInfo.BKUserData.MARITAL_STATUS);
+        predefinedKeys.put("year", BKUserInfo.BKUserDOBdata.YEAR);
+        predefinedKeys.put("month", BKUserInfo.BKUserDOBdata.MONTH);
+        predefinedKeys.put("day", BKUserInfo.BKUserDOBdata.DAY);
+        predefinedKeys.put("age", BKUserInfo.BKUserData.AGE);
+        predefinedKeys.put("email_opt", BKUserInfo.BKUserData.EMAIL_OPT_OUT);
+        predefinedKeys.put("push_opt", BKUserInfo.BKUserData.PUSH_OPT_OUT);
+        predefinedKeys.put("sms_opt", BKUserInfo.BKUserData.SMS_OPT_OUT);
+        predefinedKeys.put("data_opt", BKUserInfo.BKUserData.DATA_OPT_OUT);
+        predefinedKeys.put("ip_opt", BKUserInfo.BKUserData.IP_OPT_OUT);
+        try {
+            JSONObject providedJson = new JSONObject(userData);
+            JSONObject othersJson = new JSONObject();
+
             Bundle bundle = new Bundle();
+
             final Iterator<String> keys = providedJson.keys();
             while (keys.hasNext()) {
 
@@ -183,335 +223,250 @@ public class UpshotModule extends ReactContextBaseJavaModule {
                     } else {
                         bundle.putString(bkKey, providedJson.optString(key));
                     }
-
                 } else { // other
                     othersJson.put(key, value);
                 }
-
-            } // --while
-
+            }
             if (othersJson.length() != 0) {
-                bundle.putSerializable("others", jsonToHashMap(othersJson));
+                bundle.putSerializable("others", (HashMap)   jsonToHashMap(othersJson));
             }
 
-            BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+            final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
             bkInstance.setUserInfoBundle(bundle, new BKUserInfoCallback() {
                 @Override
                 public void onUserInfoUploaded(final boolean uploadSuccess) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Log.i("TAG", "is User profile uploaded :" + providedJson);
-
+                            callback.invoke(uploadSuccess);
                         }
                     });
                 }
             });
-        } catch (JSONException e) {
+        } catch (final JSONException e) {
             e.printStackTrace();
         }
     }
 
     @ReactMethod
-    private void fetchInboxDetails(final String isLeadResponse) {
+    private  void  getUserDetails(Callback callback) {
 
-        BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        Set<String> keys = new HashSet<>();
+        Map<String, Object> userInfo = bkInstance.getUserDetails(keys);
+        JSONObject details =  new  JSONObject(userInfo);
+        callback.invoke(details.toString());
+    }
+
+    /* Activity Module */
+    @ReactMethod
+    private void showActivityWithType(final int activityType,  final String tagName) {
+
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();        
+
+        BKActivityTypes type = BKActivityTypes.parse(activityType);
+        if (activityType == -1) {
+            type = BKActivityTypes.ACTIVITY_ANY;
+        }
+        bkInstance.getActivity(MainApplication.context, type, tagName, new BKActivityCallback() {
+            @Override
+            public void onActivityError(final int i) {
+
+            }
+
+            @Override
+            public void onActivityCreated(final BKActivityTypes bkActivityTypes) {
+
+                WritableMap payload = Arguments.createMap();
+                payload.putInt("activityType", bkActivityTypes.getValue());
+                emitDeviceEvent("UpshotActivityDidAppear", payload);
+            }
+
+            @Override
+            public void onActivityDestroyed(final BKActivityTypes bkActivityTypes) {
+
+                WritableMap payload = Arguments.createMap();
+                payload.putInt("activityType", bkActivityTypes.getValue());
+                emitDeviceEvent("UpshotActivityDidDismiss", payload);
+            }
+
+            @Override
+            public void brandKinesisActivityPerformedActionWithParams(final BKActivityTypes bkActivityTypes,
+                                                                      final Map<String, Object> map) {
+
+                WritableMap payload = Arguments.createMap();
+                payload.putMap("deepLink", (ReadableMap) map);
+                emitDeviceEvent("UpshotDeepLink", payload);
+            }
+        });
+    }
+
+    @ReactMethod
+    private void showActivityWithId(final  String activityId) {
+
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        bkInstance.getActivity(activityId, new BKActivityCallback() {
+            @Override
+            public void onActivityError(int i) {
+
+            }
+
+            @Override
+            public void onActivityCreated(BKActivityTypes bkActivityTypes) {
+
+                WritableMap payload = Arguments.createMap();
+                payload.putInt("activityType", bkActivityTypes.getValue());
+                emitDeviceEvent("UpshotActivityDidAppear", payload);
+            }
+
+            @Override
+            public void onActivityDestroyed(BKActivityTypes bkActivityTypes) {
+
+                WritableMap payload = Arguments.createMap();
+                payload.putInt("activityType", bkActivityTypes.getValue());
+                emitDeviceEvent("UpshotActivityDidDismiss", payload);
+            }
+
+            @Override
+            public void brandKinesisActivityPerformedActionWithParams(BKActivityTypes bkActivityTypes, Map<String, Object> map) {
+
+                WritableMap payload = Arguments.createMap();
+                payload.putMap("deepLink", (ReadableMap) map);
+                emitDeviceEvent("UpshotDeepLink", payload);
+            }
+        });
+    }
+
+    @ReactMethod 
+    private void removeTutorials() {
+
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        bkInstance.removeTutorial(MainApplication.context);
+    }
+
+    @ReactMethod
+    private void fetchInboxInfo(Callback callback) {
+
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
         bkInstance.fetchInboxInfo(new BKInboxAccessListener() {
             @Override
-            public void onMessagesAvailable(List<HashMap<String, Object>> messages) {
+            public void onMessagesAvailable(List<HashMap<String, Object>> list) {
 
-                int count = 0;
-                for (HashMap<String, Object> message : messages) {
+                final JSONArray messagesJson = new JSONArray();
+
+                for (HashMap<String, Object> message : list) {
+
+                    JSONObject messageJson = new JSONObject();
 
                     for (Map.Entry<String, Object> entry : message.entrySet()) {
                         try {
                             String jKey = entry.getKey();
                             if (jKey.equalsIgnoreCase("activities")) {
+                                JSONArray jsonArray = new JSONArray();
 
-                                HashMap<String, Object> activityValue = (HashMap<String, Object>) entry.getValue();
-                                Set<Map.Entry<String, Object>> entries = activityValue.entrySet();
+                                List<HashMap<String, Object>> activityArrayList = (List<HashMap<String, Object>>) entry.getValue();
 
-                                JSONObject activityJson = new JSONObject();
-                                for (Map.Entry<String, Object> activityEntry : entries) {
-                                    String key = activityEntry.getKey();
-                                    activityJson.put(key, activityEntry.getValue());
+                                for (HashMap<String, Object> activityValue : activityArrayList) {
+
+                                    JSONObject activityJson = new JSONObject();
+                                    for (Map.Entry<String, Object> activityEntry : activityValue.entrySet()) {
+                                        activityJson.put(activityEntry.getKey(), activityEntry.getValue());
+                                    }
+                                    jsonArray.put(activityJson);
                                 }
-                                int type = activityJson.optInt("type");
-                                int taken = activityJson.optInt("taken");
+                                messageJson.put(jKey, jsonArray);
+                            } else {
 
-                                if (type == BKActivityTypes.ACTIVITY_TRIVIA.getValue() && taken == 0) {
-                                    ++count;
-                                }
+                                messageJson.put(jKey, entry.getValue());
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
                     }
+                    messagesJson.put(messageJson);
                 }
-                inboxCallback(count, isLeadResponse);
+                callback.invoke(messagesJson.toString());
             }
         });
     }
 
-    @ReactMethod
-    public void getRewardsList(Context context) {
-        BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+    @ReactMethod 
+    private void getUserBadges(Callback callback) {
 
-        bkInstance.getRewardsStatusWithCompletionBlock(context, new BKRewardsResponseListener() {
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        bkInstance.getBadges(new BKBadgeAccessListener() {
             @Override
-            public void rewardsResponse(final Object response) {
-                BKUtilLogger.showDebugLog("Test rewardsResponse", "response : " + response.toString());
-            }
+            public void onBadgesAvailable(HashMap<String, List<HashMap<String, Object>>> badges) {
 
-            @Override
-            public void onErrorReceived(Object response) {
-                BKUtilLogger.showDebugLog("Test onErrorReceived", "response : " + response.toString());
+                final JSONArray activeBadgesArray = new JSONArray();
+                final JSONArray inactiveBadgesArray = new JSONArray();
 
+                for (Map.Entry<String, List<HashMap<String, Object>>> badgeMap : badges.entrySet()) {
+                    String jKey = badgeMap.getKey();
+                    List<HashMap<String, Object>> hashMapList = badges.get(jKey);
+
+                    for (int i = 0; i < hashMapList.size(); i++) {
+                        HashMap<String, Object> stringObjectHashMap = hashMapList.get(i);
+                        JSONObject badgeJson = new JSONObject();
+
+                        for (Map.Entry<String, Object> singleBadge : stringObjectHashMap.entrySet()) {
+                            try {
+                                String singleBadgeKey = singleBadge.getKey();
+                                if (singleBadge.getValue() instanceof String) {
+
+                                    String singleBadgeValue = (String) singleBadge.getValue();
+                                    if (singleBadgeKey.equals("image")) {
+                                        badgeJson.put(singleBadgeKey, "file://" + singleBadgeValue);
+                                    } else {
+                                        badgeJson.put(singleBadgeKey, singleBadgeValue);
+                                    }
+
+                                } else  if (singleBadge.getValue() instanceof  Double) {
+                                    badgeJson.put(singleBadgeKey, singleBadge.getValue());
+                                } else  if(singleBadge.getValue() instanceof  Long) {
+                                    badgeJson.put(singleBadgeKey, singleBadge.getValue());
+                                } else if (singleBadge.getValue() instanceof  Integer) {
+                                    badgeJson.put(singleBadgeKey, singleBadge.getValue());
+                                }
+                                else  {
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        if (jKey.equalsIgnoreCase("active_list")) {
+                            activeBadgesArray.put(badgeJson);
+                        } else {
+                            inactiveBadgesArray.put(badgeJson);
+                        }
+                    }
+                }
+
+                try {
+                    final JSONObject badge = new JSONObject();
+                    badge.put("active_list", activeBadgesArray);
+                    badge.put("inactive_list", inactiveBadgesArray);
+                    callback.invoke(badge.toString());
+                } catch (JSONException e){
+
+                }
             }
         });
     }
 
+    /* Push Notification Module */
     @ReactMethod
-    public void getRewardHistoryForProgram(Context context, int bkRewardHistoryTypes, String programId) {
-        BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+    private static void registerForPush(final boolean enableForeground, Callback callback) {
 
-        bkInstance.getRewardHistoryForProgramId(context, programId, bkRewardHistoryTypes, new BKRewardsResponseListener() {
-            @Override
-            public void rewardsResponse(final Object response) {
-                BKUtilLogger.showDebugLog("Test rewardsResponse", "response : " + response.toString());
-            }
-
-            @Override
-            public void onErrorReceived(Object response) {
-                BKUtilLogger.showDebugLog("Test onErrorReceived", "response : " + response.toString());
-
-            }
-        });
     }
 
     @ReactMethod
-    public void redeemRewardsForProgram(Context context, String programId, int transactionAmount, int redeemValue, String tag) {
-        BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+    private static void sendDeviceToken(final String token) {
 
-        bkInstance.redeemRewardsWithProgramId(context, programId, transactionAmount, redeemValue, tag, new BKRewardsResponseListener() {
-            @Override
-            public void rewardsResponse(final Object response) {
-                BKUtilLogger.showDebugLog("Test rewardsResponse", "response : " + response.toString());
-            }
-
-            @Override
-            public void onErrorReceived(Object response) {
-                BKUtilLogger.showDebugLog("Test onErrorReceived", "response : " + response.toString());
-
-            }
-        });
-    }
-
-    @ReactMethod
-    public void getRewardRulesforProgram(Context context, String programId) {
-        BrandKinesis bkInstance = BrandKinesis.getBKInstance();
-
-        bkInstance.getRewardDetailsForProgramId(context, programId, new BKRewardsResponseListener() {
-            @Override
-            public void rewardsResponse(final Object response) {
-                BKUtilLogger.showDebugLog("Test rewardsResponse", "response : " + response.toString());
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                    }
-                });
-            }
-
-            @Override
-            public void onErrorReceived(Object response) {
-                BKUtilLogger.showDebugLog("Test onErrorReceived", "response : " + response.toString());
-
-            }
-        });
-    }
-
-    BKUIPrefComponents customUipreferences = new BKUIPrefComponents() {
-
-        @Override
-        public void setPreferencesForRelativeLayout(RelativeLayout relativeLayout, BKActivityTypes bkActivityTypes,
-                                                    BKActivityRelativeLayoutTypes bkActivityRelativeLayoutTypes, boolean b) {
-            if (bkActivityTypes == BKActivityTypes.ACTIVITY_TRIVIA) {
-                switch (bkActivityRelativeLayoutTypes) {
-                    case BKACTIVITY_BACKGROUND_IMAGE:
-                        relativeLayout.setBackgroundColor(Color.parseColor("#f5f5f5"));
-                }
-            }
-        }
-
-        @Override
-        public void setPreferencesForImageButton(ImageButton imageButton, BKActivityTypes bkActivityTypes,
-                                                 BKActivityImageButtonTypes bkActivityImageButtonTypes) {
-
-        }
-
-        @Override
-        public void setPreferencesForButton(Button button, BKActivityTypes bkActivityTypes,
-                                            BKActivityButtonTypes bkActivityButtonTypes) {
-
-            if (bkActivityTypes == BKActivityTypes.ACTIVITY_TRIVIA) {
-                switch (bkActivityButtonTypes) {
-                    case BKACTIVITY_TRIVIA_PREVIOUS_BUTTON:
-                    case BKACTIVITY_TRIVIA_CONTINUE_BUTTON:
-                    case BKACTIVITY_TRIVIA_NEXT_BUTTON:
-                    case BKACTIVITY_SUBMIT_BUTTON:
-                        button.setBackgroundColor(Color.parseColor("#015CB9"));
-                        button.setTextColor(Color.parseColor("#FFFFFF"));
-                        break;
-                }
-            }
-        }
-
-        @Override
-        public void setPreferencesForTextView(TextView textView, BKActivityTypes bkActivityTypes,
-                                              BKActivityTextViewTypes bkActivityTextViewTypes) {
-
-            if (bkActivityTypes == BKActivityTypes.ACTIVITY_TRIVIA) {
-
-                switch (bkActivityTextViewTypes) {
-
-                    case BKACTIVITY_TRIVIA_DESC_TV:
-                        textView.setTextColor(Color.parseColor("#575757"));
-                        break;
-
-                    case BKACTIVITY_QUESTION_OPTION_TV:
-                    case BKACTIVITY_QUESTION_TV:
-                        textView.setTextColor(Color.parseColor("#575757"));
-                        break;
-
-                    case BKACTIVITY_LEADER_BOARD_SCORE_VALUE_TV:
-                    case BKACTIVITY_LEADER_BOARD_GRADE_VALUE_TV:
-                    case BKACTIVITY_LEADER_BOARD_TITLE_TV:
-
-                    case BKACTIVITY_LEADER_BOARD_SCORE_TV:
-                    case BKACTIVITY_LEADER_BOARD_GRADE_TV:
-                    case BKACTIVITY_SCORE_TV:
-
-                        textView.setTextColor(Color.parseColor("#015CB9"));
-                        break;
-                }
-            }
-        }
-
-        @Override
-        public void setPreferencesForImageView(ImageView imageView, BKActivityTypes bkActivityTypes,
-                                               BKActivityImageViewType bkActivityImageViewType) {
-
-        }
-
-        @Override
-        public void setPreferencesForOptionsSeparatorView(View view, BKActivityTypes bkActivityTypes) {
-
-        }
-
-        @Override
-        public void setCheckBoxRadioSelectorResource(BKUICheckBox bkuiCheckBox, BKActivityTypes bkActivityTypes,
-                                                     boolean b) {
-
-        }
-
-        @Override
-        public void setRatingSelectorResource(List<Bitmap> list, List<Bitmap> list1, BKActivityTypes bkActivityTypes,
-                                              BKActivityRatingTypes bkActivityRatingTypes) {
-
-        }
-
-        @Override
-        public void setPreferencesForUIColor(BKBGColors bkbgColors, BKActivityTypes bkActivityTypes,
-                                             BKActivityColorTypes bkActivityColorTypes) {
-            if (bkActivityTypes == BKActivityTypes.ACTIVITY_TRIVIA) {
-                switch (bkActivityColorTypes) {
-                    case BKACTIVITY_TRIVIA_TITLE_COLOR:
-                        bkbgColors.setColor(Color.parseColor("#015CB9"));
-                        break;
-                    case BKACTIVITY_PAGINATION_DEFAULT_COLOR:
-                        bkbgColors.setColor(Color.parseColor("#575757"));
-                        break;
-                }
-
-            }
-        }
-
-        @Override
-        public void setPreferencesForGraphColor(BKGraphType bkGraphType, List<Integer> list,
-                                                BKActivityTypes bkActivityTypes) {
-            if (bkActivityTypes != BKActivityTypes.ACTIVITY_TRIVIA) {
-            }
-        }
-
-        @Override
-        public int getPositionPercentageFromBottom(BKActivityTypes bkActivityTypes, BKViewType bkViewType) {
-            return 0;
-        }
-
-        @Override
-        public void setPreferencesForSeekBar(SeekBar seekBar, BKActivityTypes bkActivityTypes,
-                                             BKActivitySeekBarTypes bkActivitySeekBarTypes) {
-
-        }
-
-        @Override
-        public void setPreferencesForEditText(EditText editText, BKActivityTypes bkActivityTypes,
-                                              BKActivityEditTextTypes bkActivityEditTextTypes) {
-
-        }
-
-        @Override
-        public void setPreferencesForLinearLayout(LinearLayout linearLayout, BKActivityTypes bkActivityTypes,
-                                                  BKActivityLinearLayoutTypes bkActivityLinearLayoutTypes) {
-
-            if (bkActivityTypes == BKActivityTypes.ACTIVITY_TRIVIA) {
-                switch (bkActivityLinearLayoutTypes) {
-                    case BKACTIVITY_BACKGROUND_IMAGE:
-                        linearLayout.setBackgroundColor(Color.parseColor("#015cb9"));
-                }
-            }
-        }
-    };
-
-    @ReactMethod
-    private void showActivity(String tagName, Context context) {
-        Log.i("RNTestLibraryModule", "tagName:" + tagName);
-        BrandKinesis bkInstance = BrandKinesis.getBKInstance();
-        //bkInstance.setUIPreferences(customUipreferences);
-        bkInstance.getActivity(context, BKActivityTypes.ACTIVITY_ANY, tagName,
-                new BKActivityCallback() {
-                    @Override
-                    public void onActivityError(int i) {
-                        Log.i("RNTestLibraryModule", "activityerror");
-                    }
-
-                    @Override
-                    public void onActivityCreated(BKActivityTypes bkActivityTypes) {
-                        Log.i("RNTestLibraryModule", "createactivity");
-                    }
-
-                    @Override
-                    public void onActivityDestroyed(BKActivityTypes bkActivityTypes) {
-                        Log.i("RNTestLibraryModule", "destroyactivity");
-                    }
-
-                    @Override
-                    public void brandKinesisActivityPerformedActionWithParams(BKActivityTypes bkActivityTypes,
-                                                                              Map<String, Object> map) {
-
-                    }
-                });
-        Log.i("RNTestLibraryModule", "end");
-    }
-
-    @ReactMethod
-    private void sendDeviceTokenToUpshot(String token) {
-
-        Bundle userInfo = new Bundle();
+        final Bundle userInfo = new Bundle();
         userInfo.putString(BKUserInfo.BKExternalIds.GCM, token);
 
-        BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
 
         bkInstance.setUserInfoBundle(userInfo, new BKUserInfoCallback() {
             @Override
@@ -521,70 +476,242 @@ public class UpshotModule extends ReactContextBaseJavaModule {
                     public void run() {
                     }
                 });
-
             }
         });
-
     }
 
     @ReactMethod
-    private void terminateUpshot() {
-        // BrandKinesis.getBKInstance().terminate(MainApplication.getContext());
-    }
+    public static void sendPushDataToUpshot(final String pushData){
 
+        BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        try {
+            bkInstance.buildEnhancedPushNotification(MainApplication.get(), jsonToBundle(new JSONObject(pushData)), true);
+        } catch (JSONException e) {
 
-    @ReactMethod
-    private void sendPushPayloadToUpshot(String pushPayload) {
-        BrandKinesis bkInstance1 = BrandKinesis.getBKInstance();
-        if (bkInstance1 != null) {
-            try {
-                JSONObject jPushPayload = new JSONObject(pushPayload);
-                bkInstance1.buildEnhancedPushNotification(reactContext, jsonToBundle(jPushPayload), true);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
         }
     }
 
-    public static Bundle jsonToBundle(JSONObject jsonObject) throws JSONException {
-        Bundle bundle = new Bundle();
-        Iterator iter = jsonObject.keys();
+    @ReactMethod
+    private  void sendPushNotificationWithDetails(final String details) {
+
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        try {
+            final JSONObject jPushPayload = new JSONObject(details);
+            bkInstance.sendPushDetails(MainApplication.context, jsonToHashMap(jPushPayload), new BKPushCompletionBlock() {
+                @Override
+                public void onBkPushSent(boolean b) {
+
+                }
+            });
+        } catch (final JSONException e) {
+
+        }
+    }
+
+    /* GDPR */
+    @ReactMethod
+    private void disableUser(final  boolean shouldDisable, Callback callback) {
+
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        bkInstance.disableUser(shouldDisable, MainApplication.context, new BrandKinesisUserStateCompletion() {
+            @Override
+            public void userStateCompletion(boolean b) {
+                callback.invoke(b);
+            }
+        });
+    }
+
+    @ReactMethod
+    private  void getUserId(Callback callback) {
+
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        callback.invoke(bkInstance.getUserId(MainApplication.context));
+    }
+
+    @ReactMethod
+    private  void getSDKVersion(Callback callback) {
+
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        callback.invoke(bkInstance.getSdkVersion());
+    }
+
+    /* Rewards Module */
+
+    @ReactMethod
+    public void getRewardsList(Callback successCallback, Callback errorCallback) {
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+
+        bkInstance.getRewardsStatusWithCompletionBlock(MainApplication.context, new BKRewardsResponseListener() {
+            @Override
+            public void rewardsResponse(final Object response) {
+                successCallback.invoke(response);
+            }
+
+            @Override
+            public void onErrorReceived(final Object response) {
+                BKUtilLogger.showDebugLog("Test onErrorReceived", "response : " + response.toString());
+                errorCallback.invoke(response);
+            }
+        });
+    }
+
+    @ReactMethod
+    public void getRewardHistoryForProgram(final String programId, final int historyType, Callback successCallback, Callback failureCallback) {
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+
+        bkInstance.getRewardHistoryForProgramId(MainApplication.context, programId, historyType,
+                new BKRewardsResponseListener() {
+                    @Override
+                    public void rewardsResponse(final Object response) {
+                        successCallback.invoke(response);
+                    }
+
+                    @Override
+                    public void onErrorReceived(final Object response) {
+                        failureCallback.invoke(response);
+                    }
+                });
+    }
+
+    @ReactMethod
+    public void redeemRewardsForProgram(final String programId, final int transactionAmount,
+                                        final int redeemValue, final String tag, Callback successCallback, Callback failureCallback) {
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+
+        bkInstance.redeemRewardsWithProgramId(MainApplication.context, programId, transactionAmount, redeemValue, tag,
+                new BKRewardsResponseListener() {
+                    @Override
+                    public void rewardsResponse(final Object response) {
+                        successCallback.invoke(response);
+                    }
+
+                    @Override
+                    public void onErrorReceived(final Object response) {
+                        failureCallback.invoke(response);
+                    }
+                });
+    }
+
+    @ReactMethod
+    public void getRewardRulesforProgram(final String programId, Callback successCallback, Callback failureCallback) {
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+
+        bkInstance.getRewardDetailsForProgramId(MainApplication.context, programId, new BKRewardsResponseListener() {
+            @Override
+            public void rewardsResponse(final Object response) {
+                successCallback.invoke(response);
+            }
+
+            @Override
+            public void onErrorReceived(final Object response) {
+                failureCallback.invoke(response);
+            }
+        });
+    }
+
+    @ReactMethod
+    private void terminate() {
+        
+    }
+
+    /* Utility Methods */
+    public static void upshotInitStatus(boolean isSuccessCallback, String msg) {
+
+        WritableMap payload = Arguments.createMap();
+        payload.putBoolean("status", isSuccessCallback);
+        payload.putString("error", msg);
+        sendRegistrationToServer(FirebaseInstanceId.getInstance().getToken());
+        emitDeviceEvent("UpshotAuthStatus", payload);
+    }
+    
+
+    public static void sendRegistrationToServer(String token) {
+
+        if (token.isEmpty()) {
+            return;
+        }
+        sendDeviceToken(token);        
+        WritableMap payload = Arguments.createMap();
+        payload.putString("token", token);
+        emitDeviceEvent("UpshotPushToken", token);
+    }
+
+    public static void sendPushClickPayload(final String pushPayload) {
+
+        //send push payload to app
+        WritableMap payload = Arguments.createMap();
+        payload.putString("UpshotPushPayload", pushPayload);
+        emitDeviceEvent("payload", payload);
+    }
+
+
+@RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public static String bundleToJsonString(Bundle bundle){
+
+        JSONObject json = new JSONObject();
+        Set<String> keys = bundle.keySet();
+        for (String key : keys) {
+            try {
+                // json.put(key, bundle.get(key)); see edit below
+                json.put(key, JSONObject.wrap(bundle.get(key)));
+            } catch(JSONException e) {
+                //Handle exception here
+            }
+    }
+        return json.toString();
+    }
+
+    public static Bundle jsonToBundle(final JSONObject jsonObject) throws JSONException {
+
+        final Bundle bundle = new Bundle();
+        final Iterator iter = jsonObject.keys();
         while (iter.hasNext()) {
-            String key = (String) iter.next();
-            String value = jsonObject.getString(key);
+            final String key = (String) iter.next();
+            final String value = jsonObject.getString(key);
             bundle.putString(key, value);
         }
         return bundle;
     }
 
-    public static HashMap<String, Object> jsonToHashMap(JSONObject jsonObject) throws JSONException {
-        HashMap<String, Object> data = new HashMap<>();
+    public static HashMap<String, Object> jsonToHashMap(final JSONObject jsonObject) throws JSONException {
+        final HashMap<String, Object> data = new HashMap<>();
 
-        Iterator iter = jsonObject.keys();
+        final Iterator iter = jsonObject.keys();
         while (iter.hasNext()) {
-            String key = (String) iter.next();
-            String value = jsonObject.getString(key);
+            final String key = (String) iter.next();
+            final String value = jsonObject.getString(key);
             data.put(key, value);
         }
         return data;
     }
 
-    public static void pushCallback(String pushPayload) {
-        // WriteableMap params = Arguments.createMap();
-        reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit("push-callback",
-                pushPayload);
-    }
+//    public static void pushCallback(final String pushPayload) {
+//
+//        reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit("push-callback",
+//                pushPayload);
+//    }
 
-    public static void inboxCallback(int triviaCount, String isLeadResponse) {
-        try {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("triviaList", triviaCount);
-            jsonObject.put("isLeadResponse", isLeadResponse);
-            reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                    .emit("inbox-response-callback", jsonObject.toString());
-        } catch (JSONException e) {
-            e.printStackTrace();
+    public static WritableMap convertJsonToMap(JSONObject jsonObject) throws JSONException {
+        WritableMap map = new WritableNativeMap();
+
+        Iterator<String> iterator = jsonObject.keys();
+        while (iterator.hasNext()) {
+            String key = iterator.next();
+            Object value = jsonObject.get(key);
+            if (value instanceof JSONObject) {
+                map.putMap(key, convertJsonToMap((JSONObject) value));
+            } else if (value instanceof Boolean) {
+                map.putBoolean(key, (Boolean) value);
+            } else if (value instanceof Integer) {
+                map.putInt(key, (Integer) value);
+            } else if (value instanceof Double) {
+                map.putDouble(key, (Double) value);
+            } else if (value instanceof String) {
+                map.putString(key, (String) value);
+            } else {
+                map.putString(key, value.toString());
+            }
         }
+        return map;
     }
-
 }

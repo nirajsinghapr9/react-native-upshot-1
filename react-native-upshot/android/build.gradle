@@ -73,7 +73,7 @@ repositories {
 dependencies {
     //noinspection GradleDynamicVersion
     implementation 'com.facebook.react:react-native:+'  // From node_modules
-    implementation  project(':BrandKinesis-live-release-V1.5.15')
+    implementation  project(':BrandKinesis-live-debug-V1.5.19')
 }
 
 def configureReactNativePom(def pom) {

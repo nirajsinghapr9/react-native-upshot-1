@@ -8,40 +8,33 @@
 
 #import "UpshotReact.h"
 #import "UpshotCustomization.h"
-
+#import "RCTConvert+Upshot.h"
 #import <React/RCTBridge.h>
 #import <React/RCTEventDispatcher.h>
+#import "AppDelegate+UpshotPlugin.h"
 
 @implementation UpshotReact
 
 RCT_EXPORT_MODULE();
 
-+ (BOOL)requiresMainQueueSetup {
-    return NO;
-}
-
-- (dispatch_queue_t)methodQueue {
-    return dispatch_get_main_queue();
-}
-
 #pragma mark SupportedEvents
 
 - (NSArray<NSString *> *)supportedEvents {
     
-    return @[@"UpshotDeepLink",@"UpshotActivityDidAppear", @"UpshotActivityWillAppear", @"UpshotActivityDidDismiss", @"UpshotAuthentication"];
+  return @[@"UpshotDeepLink",
+           @"UpshotActivityDidAppear",
+           @"UpshotActivityWillAppear",
+           @"UpshotActivityDidDismiss",
+           @"UpshotAuthStatus",
+           @"UpshotPushToken",
+           @"UpshotPushPayload"];
 }
+
+
 
 #pragma mark Initialize Upshot
  
-RCT_EXPORT_METHOD(initializeUpshotWithOptions:(NSDictionary *)options) {
-    
-    // NSDictionary *initOptions = [self convertJsonStringToJson:options];
-    [[BrandKinesis sharedInstance] initializeWithOptions:options delegate:self];
-    UpshotCustomization *customization = [[UpshotCustomization alloc] init];
-    [[BKUIPreferences preferences] setDelegate:customization];
-}
-
-RCT_EXPORT_METHOD(initializeUpshotUsingConfigFile) {
+RCT_EXPORT_METHOD(initializeUpshot) {
     
     [[BrandKinesis sharedInstance] initializeWithDelegate:self];
 }
@@ -52,30 +45,44 @@ RCT_EXPORT_METHOD(initializeUpshotUsingConfigFile) {
 RCT_EXPORT_METHOD(createPageViewEvent:(NSString *_Nonnull)currentPage callback:(RCTResponseSenderBlock)callback) {
     
     if (currentPage && ![currentPage isEqualToString:@""]) {
-        NSString *eventId = [[BrandKinesis sharedInstance] createEvent:BKPageViewNative params:@{BKCurrentPage: currentPage} isTimed:YES];
-        if (eventId) {
-            [self returnResponse:eventId withCallback:callback andError:nil];
-        } else {
-            [self returnResponse:nil withCallback:callback andError:@"failed to create pageView event"];
-        }
+      NSString *eventId = [[BrandKinesis sharedInstance] createEvent:BKPageViewNative params:@{BKCurrentPage: currentPage} isTimed:YES];
+      callback(@[eventId]);
+    } else {
+      callback(@[[NSNull null]]);
     }
 }
 
 #pragma mark CustomEvent
 
-RCT_EXPORT_METHOD(createCustomEvent:(NSString *_Nonnull)eventName payload:(NSDictionary *_Nonnull)payload timed:(BOOL)isTimed callback:(RCTResponseSenderBlock)callback) {
+RCT_EXPORT_METHOD(createCustomEvent:(NSString *_Nonnull)eventName payload:(NSString *)payload timed:(BOOL)isTimed callback:(RCTResponseSenderBlock)callback) {
     
     if (eventName && ![eventName isEqualToString: @""]) {
-        // NSDictionary *params = [self convertJsonStringToJson:payload];
-        NSString *eventId = [[BrandKinesis sharedInstance] createEvent:eventName params:payload isTimed:isTimed];
-        if (eventId) {
-            [self returnResponse:eventId withCallback:callback andError:nil];
-        } else {
-            [self returnResponse:nil withCallback:callback andError:@"failed to create custom event"];
-        }
+        NSDictionary *eventPayload = [self convertJsonStringToJson:payload];
+        NSString *eventId = [[BrandKinesis sharedInstance] createEvent:eventName params:eventPayload isTimed:isTimed];
+        callback(@[eventId]);
     } else {
-        [self returnResponse:nil withCallback:callback andError:@"failed to create custom event"];
+      callback(@[[NSNull null]]);
     }
+}
+
+#pragma mark Close And Dispatch Events
+
+RCT_EXPORT_METHOD(setValueAndClose:(NSString *)payload forEvent:(NSString *_Nonnull)eventId) {
+    
+    NSDictionary *eventPayload = [self convertJsonStringToJson:payload];
+    [[BrandKinesis sharedInstance] setValueAndClose:eventPayload forEvent:eventId];
+}
+
+RCT_EXPORT_METHOD(closeEventForId:(NSString *_Nonnull)eventId) {
+    
+    [[BrandKinesis sharedInstance] closeEventForID:eventId];
+}
+
+RCT_EXPORT_METHOD(dispatchEventsWithTimedEvents:(BOOL)timed callback:(RCTResponseSenderBlock)callback) {
+    
+    [[BrandKinesis sharedInstance] dispatchEventsWithTimedEvents:timed completionBlock:^(BOOL dispatched) {
+        callback(@[[NSNumber numberWithBool:dispatched]]);
+    }];
 }
 
 #pragma mark LocationEvent
@@ -87,49 +94,40 @@ RCT_EXPORT_METHOD(createLocationEvent:(NSString *_Nonnull)latitude longitude:(NS
     [[BrandKinesis sharedInstance] createLocationEvent:lat longitude:lon];
 }
 
-#pragma mark Close And Dispatch Events
+#pragma mark UserProfile
 
-RCT_EXPORT_METHOD(setValueAndClose:(NSDictionary *_Nonnull)payload forEvent:(NSString *_Nonnull)eventId) {
-    
-    // NSDictionary *params = [self convertJsonStringToJson:payload];
-    [[BrandKinesis sharedInstance] setValueAndClose:payload forEvent:eventId];
-}
-
-RCT_EXPORT_METHOD(closeEventForId:(NSString *_Nonnull)eventId) {
-    
-    [[BrandKinesis sharedInstance] closeEventForID:eventId];
-}
-
-RCT_EXPORT_METHOD(dispatchEventsWithTimedEvents:(BOOL)timed) {
-    
-    [[BrandKinesis sharedInstance] dispatchEventsWithTimedEvents:timed completionBlock:^(BOOL dispatched) {
-        
+RCT_EXPORT_METHOD(setUserProfile:(NSString *)userData callback:(RCTResponseSenderBlock)callback) {
+     
+     NSDictionary *userDict = [self convertJsonStringToJson:userData];
+    [self buildUserInfoForParams:userDict completionBlock:^(BOOL success, NSError * _Nullable error) {
+      callback(@[[NSNumber numberWithBool:success]]);
     }];
+}
+
+#pragma mark GetUserDetails
+
+RCT_EXPORT_METHOD(getUserDetails:(RCTResponseSenderBlock)callback) {
+        
+    NSDictionary *userDetails = [[BrandKinesis sharedInstance] getUserDetails:@[]];
+    NSString *jsonString = [self convertToJsonString:userDetails];
+    callback(@[jsonString]);
 }
 
 #pragma mark Upshot Actions
 
 RCT_EXPORT_METHOD(showActivityWithType:(NSInteger)type andTag:(NSString *)tag) {
+  
     UpshotCustomization *customization = [[UpshotCustomization alloc] init];
     [[BKUIPreferences preferences] setDelegate:customization];
     BKActivityType activityType = (BKActivityType)type;
-    [[BrandKinesis sharedInstance] showActivityWithType:activityType andTag:tag];
-}
-
-RCT_EXPORT_METHOD(showActivityWithTag:(NSString *_Nonnull)tag) {
-    
-    UpshotCustomization *customization = [[UpshotCustomization alloc] init];
-    [[BKUIPreferences preferences] setDelegate:customization];
-
     [[BrandKinesis sharedInstance] setDelegate:self];
-    [[BrandKinesis sharedInstance] showActivityWithType:BKActivityTypeAny andTag:tag];
+    [[BrandKinesis sharedInstance] showActivityWithType:activityType andTag:tag];
 }
 
 RCT_EXPORT_METHOD(showActivityWithId:(NSString *_Nonnull)activityId) {
     
     UpshotCustomization *customization = [[UpshotCustomization alloc] init];
     [[BKUIPreferences preferences] setDelegate:customization];
-
     [[BrandKinesis sharedInstance] setDelegate:self];
     [[BrandKinesis sharedInstance] showActivityWithActivityId:activityId];
 }
@@ -139,64 +137,92 @@ RCT_EXPORT_METHOD(removeTutorials) {
     [[BrandKinesis sharedInstance] removeTutorials];
 }
 
-RCT_EXPORT_METHOD(getUserBadges:(RCTResponseSenderBlock)callback) {
-    
-    NSDictionary *userBadges = [[BrandKinesis sharedInstance] getUserBadges];
-    [self returnResponse:userBadges withCallback:callback andError:nil];
-}
-
 RCT_EXPORT_METHOD(fetchInboxInfo:(RCTResponseSenderBlock)callback) {
     
     [[BrandKinesis sharedInstance] fetchInboxInfoWithCompletionBlock:^(NSArray * _Nonnull inbox) {
-        [self returnResponse:inbox withCallback:callback andError:nil];
+      NSString *jsonString = [self convertToJsonString:inbox];
+        callback(@[jsonString]);
     }];
 }
 
-#pragma mark UserProfile
-
-RCT_EXPORT_METHOD(setUserProfile:(NSDictionary *_Nonnull)userData) {
-     
-     NSDictionary *userDict = [self convertJsonStringToJson:userData];
-     [self buildUserInfoForParams:userDict];
-}
-
-#pragma mark GetUserDetails
-
-RCT_EXPORT_METHOD(getUserDetails:(NSArray *)keys details:(RCTResponseSenderBlock)callback) {
+RCT_EXPORT_METHOD(getUserBadges:(RCTResponseSenderBlock)callback) {
+    
+    NSMutableDictionary *badges = [[[BrandKinesis sharedInstance] getUserBadges] mutableCopy];
+    NSMutableArray *activeBadges = [badges[@"active_list"] mutableCopy];
+    NSMutableArray *inactiveBadges = [badges[@"inactive_list"] mutableCopy];
+    
+    for (int index = 0; index < [activeBadges count]; index++) {
         
-    NSDictionary *userDetails = [[BrandKinesis sharedInstance] getUserDetails:keys];
-    [self returnResponse:userDetails withCallback:callback andError:nil];
+        NSMutableDictionary *badge = [[NSMutableDictionary alloc] initWithDictionary:[activeBadges objectAtIndex:index]];
+        [badge setObject:[self writeImageToTemp:badge[@"badgeImage"] withName:badge[@"badge"]] forKey:@"image"];
+        [badge setObject:badge[@"badgeDesc"] forKey:@"desc"];
+        [badge removeObjectForKey:@"badgeImage"];
+        [badge removeObjectForKey:@"badgeDesc"];
+        [activeBadges replaceObjectAtIndex:index withObject:badge];
+    }
+    
+    for (int index = 0; index < [inactiveBadges count]; index++) {
+        
+        NSMutableDictionary *badge = [[NSMutableDictionary alloc] initWithDictionary:[inactiveBadges objectAtIndex:index]];
+        [badge setObject:[self writeImageToTemp:badge[@"badgeImage"] withName:badge[@"badge"]] forKey:@"image"];
+        [badge setObject:badge[@"badgeDesc"] forKey:@"desc"];
+        [badge removeObjectForKey:@"badgeImage"];
+        [badge removeObjectForKey:@"badgeDesc"];
+        [inactiveBadges replaceObjectAtIndex:index withObject:badge];
+    }
+  
+    
+    [badges setObject:activeBadges forKey:@"active_list"];
+    [badges setObject:inactiveBadges forKey:@"inactive_list"];
+
+    NSString *jsonString = [self convertToJsonString:badges];
+    callback(@[jsonString]);
 }
 
 #pragma mark PushNotifications
 
+RCT_EXPORT_METHOD(registerForPush:(BOOL)enableForeground callback:(RCTResponseSenderBlock)callback) {
+  
+  [self registerForPush:enableForeground callback:callback];
+}
+
 RCT_EXPORT_METHOD(sendDeviceToken:(NSString *)token) {
     
-    BKUserInfo *userInfo = [[BKUserInfo alloc] init];
-    BKExternalId *externalId = [[BKExternalId alloc] init];
-    externalId.apnsID = token;
-    userInfo.externalId = externalId;
-    [userInfo buildUserInfoWithCompletionBlock:nil];
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+          BKUserInfo *userInfo = [[BKUserInfo alloc] init];
+          BKExternalId *externalId = [[BKExternalId alloc] init];
+          externalId.apnsID = token;
+          userInfo.externalId = externalId;
+          [userInfo buildUserInfoWithCompletionBlock:nil];
+
+  });
 }
 
-RCT_EXPORT_METHOD(sendPushClickDetails:(NSDictionary *)pushDetails) {
+RCT_EXPORT_METHOD(sendPushDataToUpshot:(NSString *)pushDetails) {
     
-    NSDictionary *payload = [self convertJsonStringToJson:pushDetails];
-    [[BrandKinesis sharedInstance] handlePushNotificationWithParams:payload withCompletionBlock:nil];
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(.02 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+      
+      NSDictionary *payload = [self convertJsonStringToJson:pushDetails];
+      [[BrandKinesis sharedInstance] handlePushNotificationWithParams:payload withCompletionBlock:nil];
+  });
 }
 
-RCT_EXPORT_METHOD(sendPushNotificationWithDetails:(NSDictionary *)pushDetails) {
+RCT_EXPORT_METHOD(sendPushNotificationWithDetails:(NSString *)pushDetails callback:(RCTResponseSenderBlock)callback) {
     
     NSDictionary *payload = [self convertJsonStringToJson:pushDetails];
-    [[BrandKinesis sharedInstance] sendPushDetails:payload withCompletionBlock:nil];
+  [[BrandKinesis sharedInstance] sendPushDetails:payload withCompletionBlock:^(BOOL status, NSError * _Nullable error) {
+        callback(@[[NSNumber numberWithBool:status]]);
+  }];
 }
 
 
 #pragma mark GDPR
 
-RCT_EXPORT_METHOD(disableUser:(BOOL)shouldDisable) {
+RCT_EXPORT_METHOD(disableUser:(BOOL)shouldDisable callback:(RCTResponseSenderBlock)callback) {
     
-    [[BrandKinesis sharedInstance] disableUser:shouldDisable completion:nil];
+  [[BrandKinesis sharedInstance] disableUser:shouldDisable completion:^(BOOL status, NSError * _Nullable error) {
+    callback(@[[NSNumber numberWithBool:status]]);
+  }];
 }
 
 #pragma mark Upshot UserId
@@ -204,7 +230,7 @@ RCT_EXPORT_METHOD(disableUser:(BOOL)shouldDisable) {
 RCT_EXPORT_METHOD(getUserId:(RCTResponseSenderBlock)callback) {
     
     NSString *userId = [[BrandKinesis sharedInstance] getUserId];
-    [self returnResponse:userId withCallback:callback andError:nil];
+    callback(@[userId]);
 }
 
 #pragma mark SDK Vesrion
@@ -212,49 +238,70 @@ RCT_EXPORT_METHOD(getUserId:(RCTResponseSenderBlock)callback) {
 RCT_EXPORT_METHOD(getSDKVersion:(RCTResponseSenderBlock)callback) {
     
     NSString *version = [BrandKinesis sharedInstance].version;
-    [self returnResponse:version withCallback:callback andError:nil];
+    callback(@[version]);
 }
 
 #pragma mark Rewards
 
-RCT_EXPORT_METHOD(getRewardsList:(RCTResponseSenderBlock)callback) {
+RCT_EXPORT_METHOD(getRewardsList:(RCTResponseSenderBlock)successCallback error:(RCTResponseSenderBlock)failureCallback) {
     
     [[BrandKinesis sharedInstance] getRewardsStatusWithCompletionBlock:^(NSDictionary * _Nullable response, NSString * _Nullable errorMessage) {
         
         NSString *error = errorMessage ? errorMessage : @"";
-        NSDictionary *result = response ? result : @{};
-        [self returnResponse:result withCallback:callback andError:error];
+        if (errorMessage.length > 0) {
+            failureCallback(@[error]);
+        } else {
+          NSDictionary *result = response ? response : @{};
+          NSString *jsonString = [self convertToJsonString:result];
+          successCallback(@[jsonString]);
+        }
     }];
 }
 
-RCT_EXPORT_METHOD(getRewardHistoryForProgram:(NSString *)programId historyType:(BKRewardHistoryType)type callback:(RCTResponseSenderBlock)callback) {
+RCT_EXPORT_METHOD(getRewardHistoryForProgram:(NSString *)programId historyType:(NSInteger)type callback:(RCTResponseSenderBlock)successCallback error:(RCTResponseSenderBlock)failureCallback) {
     
-    [[BrandKinesis sharedInstance] getRewardHistoryForProgramId:programId withHistoryType:type withCompletionBlock:^(NSDictionary * _Nullable response, NSString * _Nullable errorMessage) {
-        
+  BKRewardHistoryType historyType = (BKRewardHistoryType)type;
+    [[BrandKinesis sharedInstance] getRewardHistoryForProgramId:programId withHistoryType:historyType withCompletionBlock:^(NSDictionary * _Nullable response, NSString * _Nullable errorMessage) {
+      
         NSString *error = errorMessage ? errorMessage : @"";
-        NSDictionary *result = response ? result : @{};
-        [self returnResponse:result withCallback:callback andError:error];
+        if (errorMessage.length > 0) {
+            failureCallback(@[error]);
+        } else {
+          NSDictionary *result = response ? response : @{};
+          NSString *jsonString = [self convertToJsonString:result];
+          successCallback(@[jsonString]);
+        }
     }];
 }
 
-RCT_EXPORT_METHOD(getRewardRulesforProgram:(NSString *)programId callback:(RCTResponseSenderBlock)callback) {
+RCT_EXPORT_METHOD(getRewardRulesforProgram:(NSString *)programId callback:(RCTResponseSenderBlock)successCallback error:(RCTResponseSenderBlock)failureCallback) {
     
     [[BrandKinesis sharedInstance] getRewardDetailsForProgramId:programId
                                             withCompletionblock:^(NSDictionary * _Nullable response, NSString * _Nullable errorMessage) {
         
         NSString *error = errorMessage ? errorMessage : @"";
-        NSDictionary *result = response ? result : @{};
-        [self returnResponse:result withCallback:callback andError:error];
+        if (errorMessage.length > 0) {
+            failureCallback(@[error]);
+        } else {
+          NSDictionary *result = response ? response : @{};
+          NSString *jsonString = [self convertToJsonString:result];
+          successCallback(@[jsonString]);
+        }
     }];
 }
 
-RCT_EXPORT_METHOD(redeemRewardsForProgram:(NSString *)programId transactionAmount:(NSInteger)amount redeemValue:(NSInteger)value tag:(NSString *)tag callback:(RCTResponseSenderBlock)callback) {
+RCT_EXPORT_METHOD(redeemRewardsForProgram:(NSString *)programId transactionAmount:(NSInteger)amount redeemValue:(NSInteger)value tag:(NSString *)tag callback:(RCTResponseSenderBlock)successCallback error:(RCTResponseSenderBlock)failureCallback) {
     
     [[BrandKinesis sharedInstance] redeemRewardsWithProgramId:programId transactionValue:amount redeemAmout:value tag:tag withCompletionblock:^(NSDictionary * _Nullable response, NSString * _Nullable errorMessage) {
         
         NSString *error = errorMessage ? errorMessage : @"";
-        NSDictionary *result = response ? result : @{};
-        [self returnResponse:result withCallback:callback andError:error];
+        if (errorMessage.length > 0) {
+            failureCallback(@[error]);
+        } else {
+          NSDictionary *result = response ? response : @{};
+          NSString *jsonString = [self convertToJsonString:result];
+          successCallback(@[jsonString]);
+        }
     }];
 }
 
@@ -269,7 +316,8 @@ RCT_EXPORT_METHOD(terminate) {
 #pragma mark Authentication Delegate
 
 - (void)brandKinesisAuthentication:(BrandKinesis *)brandKinesis withStatus:(BOOL)status error:(NSError *)error {
-        [self sendEventWithName:@"UpshotAuthentication" body:@{@"status": [NSNumber numberWithBool:status]}];
+    
+    [self sendEventWithName:@"UpshotAuthStatus" body:@{@"status": [NSNumber numberWithBool:status], @"error": error ? error : [NSNull null]}];
 }
 
 #pragma mark Activity Delegates
@@ -277,25 +325,32 @@ RCT_EXPORT_METHOD(terminate) {
 - (void)brandKinesisActivity:(BKActivityType)activityType performedActionWithParams:(NSDictionary *)params {
     
       [self sendEventWithName:@"UpshotDeepLink" body:@{@"deepLink": params[@"deepLink"]}];
-
 }
 
 - (void)brandKinesisActivityDidAppear:(BrandKinesis *)brandKinesis forActivityType:(BKActivityType)activityType {
     
-    [self sendEventWithName:@"UpshotActivityDidAppear" body:@{@"activityType": [NSNumber numberWithInt:activityType]}];
+    [self sendEventWithName:@"UpshotActivityDidAppear" body:@{@"activityType": [NSNumber numberWithInteger:activityType]}];
 }
 
 - (void)brandkinesisActivityWillAppear:(BrandKinesis *)brandKinesis forActivityType:(BKActivityType)activityType {
     
-    [self sendEventWithName:@"UpshotActivityWillAppear" body:@{@"activityType": [NSNumber numberWithInt:activityType]}];
+    [self sendEventWithName:@"UpshotActivityWillAppear" body:@{@"activityType": [NSNumber numberWithInteger:activityType]}];
 }
 
 - (void)brandKinesisActivityDidDismiss:(BrandKinesis *)brandKinesis forActivityType:(BKActivityType)activityType {
     
-    [self sendEventWithName:@"UpshotActivityDidDismiss" body:@{@"activityType": [NSNumber numberWithInt:activityType]}];
+    [self sendEventWithName:@"UpshotActivityDidDismiss" body:@{@"activityType": [NSNumber numberWithInteger:activityType]}];
 }
 
+#pragma mark Notification Delegates
 
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler {
+    
+    if (self.allowForegroundPush) {
+
+        completionHandler(UNAuthorizationOptionAlert | UNAuthorizationOptionBadge | UNAuthorizationOptionSound);
+    }
+}
 
 #pragma mark Utility Methods
 
@@ -306,7 +361,7 @@ RCT_EXPORT_METHOD(terminate) {
   return jsonDict;
 }
 
-- (NSString *)convertToJsonString:(NSDictionary *)json {
+- (NSString *)convertToJsonString:(id)json {
   
   NSError *error = nil;
   NSData *data = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:&error];
@@ -317,7 +372,52 @@ RCT_EXPORT_METHOD(terminate) {
   return @"";
 }
 
-- (void)buildUserInfoForParams:(NSDictionary *)dict {
+- (void)registerForPushWithForeground:(BOOL)foregroundPush callback:(RCTResponseSenderBlock)callback {
+      
+  self.allowForegroundPush = foregroundPush;
+    if ([[[UIDevice currentDevice] systemVersion]floatValue] >= 10.0 ) {
+        
+        UNUserNotificationCenter *notificationCenter = [UNUserNotificationCenter currentNotificationCenter];
+        [notificationCenter requestAuthorizationWithOptions:(UNAuthorizationOptionAlert | UNAuthorizationOptionBadge | UNAuthorizationOptionSound ) completionHandler:^(BOOL granted, NSError * _Nullable error) {
+            if (granted) {
+                [notificationCenter setDelegate:self];
+            }
+          callback(@[[NSNumber numberWithBool:granted]]);
+        }];
+    } else {
+        
+        UIUserNotificationType types = (UIUserNotificationTypeAlert|
+                                        UIUserNotificationTypeSound|
+                                        UIUserNotificationTypeBadge);
+        UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:types categories:nil];
+        [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+        [[UIApplication sharedApplication] registerForRemoteNotifications];
+    }
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[UIApplication sharedApplication] registerForRemoteNotifications];
+    });
+}
+
+- (void)getDeviceToken:(NSString *)token {
+  
+      [self sendEventWithName:@"UpshotPushToken" body:@{@"token": token}];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+          BKUserInfo *userInfo = [[BKUserInfo alloc] init];
+          BKExternalId *externalId = [[BKExternalId alloc] init];
+          externalId.apnsID = token;
+          userInfo.externalId = externalId;
+          [userInfo buildUserInfoWithCompletionBlock:nil];
+  });
+}
+
+- (void)getPushPayload:(NSDictionary *)payload {
+  
+    [self sendEventWithName:@"UpshotPushPayload" body:@{@"payload": [self convertToJsonString:userDetails]}];
+    [[BrandKinesis sharedInstance] handlePushNotificationWithParams:payload withCompletionBlock:nil];
+}
+
+- (void)buildUserInfoForParams:(NSDictionary *)dict completionBlock:(void(^)(BOOL success,  NSError * _Nullable error))block {
   
   if (dict == nil || dict.allKeys.count < 1) {
     return;
@@ -372,6 +472,7 @@ RCT_EXPORT_METHOD(terminate) {
   [userInfo setDateOfBirth:dob];
   
   [userInfo buildUserInfoWithCompletionBlock:^(BOOL success, NSError *error) {
+      block(success, error);
   }];
 }
 
@@ -387,7 +488,7 @@ RCT_EXPORT_METHOD(terminate) {
                               @"advertisingID",
                               @"instagramID",
                               @"pinterest",
-                              @""];
+                              ];
   
   if ([externalIdKeys containsObject:key]) {
     return @"BKExternalId";
@@ -407,6 +508,7 @@ RCT_EXPORT_METHOD(terminate) {
                             @"language",
                             @"occupation",
                             @"qualification",
+                            @"maritalStatus",
                             @"phone",
                             @"localeCode",
                             @"userName",
@@ -424,16 +526,23 @@ RCT_EXPORT_METHOD(terminate) {
   }
   
   return  @"Others";
+  
 }
 
-- (void)returnResponse:(id)response withCallback:(RCTResponseSenderBlock)callback andError:(NSString *)error {
-    if (callback == nil) {
-        RCTLogInfo(@"Upshot callback was nil");
-        return;
+- (NSString *)writeImageToTemp:(UIImage *)image withName:(NSString *)name {
+    
+    if (!image) {
+        return nil;
     }
-    id e  = error != nil ? error : [NSNull null];
-    id r  = response != nil ? response : [NSNull null];
-    callback(@[e,r]);
+    NSString* tempPath = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory,
+                                                              NSUserDomainMask,
+                                                              YES) lastObject];
+  
+    NSString *filePath = [tempPath stringByAppendingPathComponent:[NSString stringWithFormat:@"%@%@",name,@".png"]];
+    NSData *pngData = UIImagePNGRepresentation(image);
+    [pngData writeToFile:filePath atomically:YES];
+    return filePath;
 }
+
 
 @end
