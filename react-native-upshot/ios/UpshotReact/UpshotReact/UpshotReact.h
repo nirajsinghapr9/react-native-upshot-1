@@ -9,13 +9,9 @@
 #import <React/RCTBridgeModule.h>
 #import <React/RCTEventEmitter.h>
 
-
 @import Upshot;
 
 @interface UpshotReact : RCTEventEmitter <RCTBridgeModule, BrandKinesisDelegate, UNUserNotificationCenterDelegate>
 @property (nonatomic, assign) BOOL allowForegroundPush;
-
-- (void)getDeviceToken:(NSString *)token;
-- (void)getPushPayload:(NSDictionary *)payload;
 
 @end

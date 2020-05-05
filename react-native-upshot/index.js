@@ -1,7 +1,10 @@
 import { NativeModules } from 'react-native';
 
 const UpshotReact = NativeModules.UpshotReact;
-
+console.log("NativeModules============");
+console.log(NativeModules);
+console.log("UpshotReact=========")
+console.log(UpshotReact);
 // function functionWithCallback(methodName, args, callback) {
 
 //     if (typeof callback === 'undefined' || callback == null || typeof callback !== 'function') {

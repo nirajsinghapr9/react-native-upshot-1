@@ -10,7 +10,6 @@
 		175D1B3423C50181009B8D37 /* UpshotReact.m in Sources */ = {isa = PBXBuildFile; fileRef = 175D1B3323C50181009B8D37 /* UpshotReact.m */; };
 		175D1B3523C50181009B8D37 /* UpshotReact.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 175D1B3223C50181009B8D37 /* UpshotReact.h */; };
 		175D1B4723C50AA8009B8D37 /* Upshot.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 175D1B4623C50AA8009B8D37 /* Upshot.framework */; };
-		178598CB24615A8C00F829E0 /* AppDelegate+UpshotPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 178598CA24615A8C00F829E0 /* AppDelegate+UpshotPlugin.m */; };
 		17F79D9923E97DB2003C0CB0 /* UpshotCustomization.m in Sources */ = {isa = PBXBuildFile; fileRef = 17F79D9823E97DB1003C0CB0 /* UpshotCustomization.m */; };
 /* End PBXBuildFile section */
 
@@ -32,8 +31,6 @@
 		175D1B3223C50181009B8D37 /* UpshotReact.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UpshotReact.h; sourceTree = "<group>"; };
 		175D1B3323C50181009B8D37 /* UpshotReact.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UpshotReact.m; sourceTree = "<group>"; };
 		175D1B4623C50AA8009B8D37 /* Upshot.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Upshot.framework; path = UpshotReact/Upshot.framework; sourceTree = SOURCE_ROOT; };
-		178598C924615A8C00F829E0 /* AppDelegate+UpshotPlugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "AppDelegate+UpshotPlugin.h"; sourceTree = "<group>"; };
-		178598CA24615A8C00F829E0 /* AppDelegate+UpshotPlugin.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "AppDelegate+UpshotPlugin.m"; sourceTree = "<group>"; };
 		17F79D8723E97DB1003C0CB0 /* UpshotCustomization.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UpshotCustomization.h; sourceTree = "<group>"; };
 		17F79D9823E97DB1003C0CB0 /* UpshotCustomization.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UpshotCustomization.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -71,8 +68,6 @@
 		175D1B3123C50181009B8D37 /* UpshotReact */ = {
 			isa = PBXGroup;
 			children = (
-				178598C924615A8C00F829E0 /* AppDelegate+UpshotPlugin.h */,
-				178598CA24615A8C00F829E0 /* AppDelegate+UpshotPlugin.m */,
 				175D1B3223C50181009B8D37 /* UpshotReact.h */,
 				175D1B3323C50181009B8D37 /* UpshotReact.m */,
 				17F79D8723E97DB1003C0CB0 /* UpshotCustomization.h */,
@@ -153,7 +148,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				178598CB24615A8C00F829E0 /* AppDelegate+UpshotPlugin.m in Sources */,
 				17F79D9923E97DB2003C0CB0 /* UpshotCustomization.m in Sources */,
 				175D1B3423C50181009B8D37 /* UpshotReact.m in Sources */,
 			);
