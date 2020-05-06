@@ -1,157 +1,157 @@
 import { NativeModules } from 'react-native';
 
 const UpshotReact = NativeModules.UpshotReact;
-// function functionWithCallback(methodName, args, callback) {
+function functionWithCallback(methodName, args, callback) {
 
-//     if (typeof callback === 'undefined' || callback == null || typeof callback !== 'function') {
-//         callback = (err, res) => {
+    if (typeof callback === 'undefined' || callback == null || typeof callback !== 'function') {
+        callback = (err, res) => {
 
-//             if(err) {
-//                 console.log('Upshot' + methodName + 'callback error' , err);
-//             } else {
-//                 console.log('Upshot' + methodName + 'callback result' , res);
-//             }                        
-//         };        
-//     }
+            if(err) {
+                console.log('Upshot' + methodName + 'callback error' , err);
+            } else {
+                console.log('Upshot' + methodName + 'callback result' , res);
+            }                        
+        };        
+    }
 
-//     if(args == null) {
-//         args = [];
-//     }
-//     args.push(callback);
-//     UpshotReact[methodName].apply(this, args);
-// }
+    if(args == null) {
+        args = [];
+    }
+    args.push(callback);
+    UpshotReact[methodName].apply(this, args);
+}
 
 
-// var Upshot = {
+var Upshot = {
     
-//     initializeUpshot: function(options) {
-//         UpshotReact.initializeUpshot(options);
-//     },
+    initializeUpshot: function() {
+        UpshotReact.initializeUpshot();
+    },
          
-//     createPageViewEvent: function(screenName, callback) {
-//         functionWithCallback('createPageViewEvent', [screenName], callback); 
-//     },
+    createPageViewEvent: function(screenName, callback) {
+        functionWithCallback('createPageViewEvent', [screenName], callback); 
+    },
 
-//     createCustomEvent: function(eventName, payload, isTimed, callback) {
-//         functionWithCallback('createCustomEvent', [eventName, payload, isTimed], callback); 
-//     },
+    createCustomEvent: function(eventName, payload, isTimed, callback) {
+        functionWithCallback('createCustomEvent', [eventName, payload, isTimed], callback); 
+    },
 
-//     createLocationEvent: function(latitude, longitude) {
+    createLocationEvent: function(latitude, longitude) {
 
-//         UpshotReact.createLocationEvent(latitude, longitude);
-//     },
+        UpshotReact.createLocationEvent(latitude, longitude);
+    },
 
-//     setValueAndClose: function(payload, eventId) {
+    setValueAndClose: function(payload, eventId) {
 
-//         UpshotReact.setValueAndClose(payload, eventId);
-//     },
+        UpshotReact.setValueAndClose(payload, eventId);
+    },
 
-//     closeEventForId: function(eventId) {
+    closeEventForId: function(eventId) {
 
-//         UpshotReact.closeEventForId(eventId);
-//     },
+        UpshotReact.closeEventForId(eventId);
+    },
 
-//     dispatchEventsWithTimedEvents: function(timed) {
-//         UpshotReact.dispatchEventsWithTimedEvents(timed);
-//     },
+    dispatchEventsWithTimedEvents: function(timed) {
+        UpshotReact.dispatchEventsWithTimedEvents(timed);
+    },
 
-//     //Activity methods
-//     showActivityWithType: function(type, tag) {
+    //Activity methods
+    showActivityWithType: function(type, tag) {
 
-//         UpshotReact.showActivityWithType(type, tag);
-//     },
+        UpshotReact.showActivityWithType(type, tag);
+    },
 
-//     showActivityWithTag: function(tag) {
+    showActivityWithTag: function(tag) {
 
-//         UpshotReact.showActivityWithTag(tag);
-//     },
+        UpshotReact.showActivityWithTag(tag);
+    },
 
-//     showActivityWithId: function(activityId) {
+    showActivityWithId: function(activityId) {
 
-//         UpshotReact.showActivityWithId(activityId);
-//     },
+        UpshotReact.showActivityWithId(activityId);
+    },
 
-//     removeTutorials: function() {
-//         UpshotReact.removeTutorials();
-//     },
+    removeTutorials: function() {
+        UpshotReact.removeTutorials();
+    },
 
-//     getUserBadges: function(callback) {
+    getUserBadges: function(callback) {
 
-//         functionWithCallback('getUserBadges', null, callback);
-//     },
+        functionWithCallback('getUserBadges', null, callback);
+    },
 
-//     fetchInboxInfo: function(callback) {
-//         functionWithCallback('fetchInboxInfo', null, callback);
-//     },
+    fetchInboxInfo: function(callback) {
+        functionWithCallback('fetchInboxInfo', null, callback);
+    },
 
-//     //UserProfile methods
-//     setUserProfile: function(userData) {
+    //UserProfile methods
+    setUserProfile: function(userData) {
 
-//         UpshotReact.setUserProfile(userData);
-//     },
+        UpshotReact.setUserProfile(userData);
+    },
 
-//     getUserDetails: function(keys, callback) {
+    getUserDetails: function(keys, callback) {
 
-//         functionWithCallback('getUserDetails', keys, callback);
-//     },
+        functionWithCallback('getUserDetails', keys, callback);
+    },
 
-//     //Pushnotification methods
-//     sendDeviceToken: function(token) {
+    //Pushnotification methods
+    sendDeviceToken: function(token) {
 
-//         UpshotReact.sendDeviceToken(token);
-//     },
+        UpshotReact.sendDeviceToken(token);
+    },
 
-//     sendPushClickDetails: function(pushPayload) {
+    sendPushClickDetails: function(pushPayload) {
 
-//         UpshotReact.sendPushClickDetails(pushPayload);
-//     },
+        UpshotReact.sendPushClickDetails(pushPayload);
+    },
 
-//     sendCustomPushNotificationWithDetails: function(pushDetails) {
+    sendCustomPushNotificationWithDetails: function(pushDetails) {
 
-//         UpshotReact.sendPushNotificationWithDetails(pushDetails);
-//     },
+        UpshotReact.sendPushNotificationWithDetails(pushDetails);
+    },
 
-//     //GDPR methods
-//     disableUser: function(shouldDisable) {
+    //GDPR methods
+    disableUser: function(shouldDisable) {
 
-//         UpshotReact.disableUser(shouldDisable);
-//     },
+        UpshotReact.disableUser(shouldDisable);
+    },
 
-//     //Get Upshot userId method
-//     getUserId: function(callback) {
-//         functionWithCallback('getUserId', null, callback);
-//     },
+    //Get Upshot userId method
+    getUserId: function(callback) {
+        functionWithCallback('getUserId', null, callback);
+    },
 
-//     //Get Upshot SDK version
-//     getSDKVersion: function(callback) {
+    //Get Upshot SDK version
+    getSDKVersion: function(callback) {
 
-//         functionWithCallback('getSDKVersion', null, callback);
-//     },
+        functionWithCallback('getSDKVersion', null, callback);
+    },
 
-//     //Rewards
-//     getRewardsList: function(callback) {
-//         functionWithCallback('getRewardsList', null, callback);
-//     },
+    //Rewards
+    getRewardsList: function(callback) {
+        functionWithCallback('getRewardsList', null, callback);
+    },
 
-//     getRewardHistoryForProgram: function(programId, historyType, callback) {
+    getRewardHistoryForProgram: function(programId, historyType, callback) {
 
-//         functionWithCallback('getRewardHistoryForProgram', [programId, historyType], callback);
-//     },
+        functionWithCallback('getRewardHistoryForProgram', [programId, historyType], callback);
+    },
 
-//     getRewardRulesforProgram: function(programId, callback) {
+    getRewardRulesforProgram: function(programId, callback) {
 
-//         functionWithCallback('getRewardRulesforProgram', [programId], callback);
-//     },
+        functionWithCallback('getRewardRulesforProgram', [programId], callback);
+    },
 
-//     redeemRewardsForProgram: function(programId, transactionValue, redeemValue, tag) {
+    redeemRewardsForProgram: function(programId, transactionValue, redeemValue, tag) {
 
-//         functionWithCallback('redeemRewardsForProgram', [programId, transactionValue, redeemValue], callback);
-//     },
+        functionWithCallback('redeemRewardsForProgram', [programId, transactionValue, redeemValue], callback);
+    },
 
-//     //Terminate Upshot
-//     terminate: function() {
-//         UpshotReact.terminate();
-//     }
-// };
+    //Terminate Upshot
+    terminate: function() {
+        UpshotReact.terminate();
+    }
+};
 
-module.exports = UpshotReact;
+module.exports = Upshot
