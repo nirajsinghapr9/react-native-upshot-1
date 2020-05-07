@@ -1,6 +1,8 @@
-import { NativeModules } from 'react-native';
+import { NativeModules, NativeEventEmitter} from 'react-native';
 
 const UpshotReact = NativeModules.UpshotReact;
+var upshotEmitter = new NativeEventEmitter(UpshotReact)
+
 
 var Upshot = {
     
@@ -283,7 +285,19 @@ var Upshot = {
     */
     terminate: function() {
         UpshotReact.terminate();
+    },
+
+    /**
+    * Add Upshot event listener
+    * supported events UpshotAuthStatus, UpshotActivityDidAppear, UpshotActivityDidDismiss, UpshotDeepLink, UpshotPushToken, UpshotPushPayload
+    * @param {string} eventName - the Upshot event name
+    * @param {function(event)} your event handler
+    */
+   addListener: function(eventName, handler) {
+    if (upshotEmitter) {
+        upshotEmitter.addListener(eventName, handler);
     }
+},
 };
 
 module.exports = Upshot
