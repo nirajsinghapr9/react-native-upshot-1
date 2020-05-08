@@ -9,7 +9,7 @@ import android.util.Log;
 
 import com.brandkinesis.BrandKinesis;
 import com.brandkinesis.utils.BKUtilLogger;
-import com.upshot.UpshotModule;
+import com.reactlibrary.UpshotModule;
 
 import org.json.JSONException;
 import org.json.JSONObject;

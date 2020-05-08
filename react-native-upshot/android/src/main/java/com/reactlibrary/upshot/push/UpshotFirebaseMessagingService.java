@@ -18,8 +18,6 @@ import com.brandkinesis.BrandKinesis;
 import com.brandkinesis.utils.BKUtilLogger;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
-import com.upshot.MainActivity;
-import com.upshot.R;
 
 import java.util.Map;
 

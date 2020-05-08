@@ -4,7 +4,7 @@ import android.util.Log;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.FirebaseInstanceIdService;
-import com.upshot.UpshotModule;
+import com.reactlibrary.UpshotModule;
 
 /**
  * Created by PurpleTalk on 30/12/16.
