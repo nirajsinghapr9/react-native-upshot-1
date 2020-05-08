@@ -49,7 +49,6 @@ import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.Callback;
 import com.google.firebase.iid.FirebaseInstanceId;
-import com.upshot.MainApplication;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -97,7 +96,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
     /* Events Module */
     @ReactMethod
-    private void createPageViewEvent(final String PageName, Callback callback) {
+    private void createPageViewEvent(final String PageName, final Callback callback) {
 
         final HashMap<String, Object> pageData = new HashMap<>();
         pageData.put(BrandKinesis.BK_CURRENT_PAGE, PageName);
@@ -107,7 +106,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    private void createCustomEvent(final String eventName, final String eventPayload, final boolean isTimed, Callback callback) {
+    private void createCustomEvent(final String eventName, final String eventPayload, final boolean isTimed, final Callback callback) {
 
         try {
             final JSONObject jeventPayload = new JSONObject(eventPayload);
@@ -140,9 +139,9 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    private void dispatchEventsWithTimedEvents(final boolean timed, Callback callback) {
+    private void dispatchEventsWithTimedEvents(final boolean timed, final Callback callback) {
         try {
-            BrandKinesis.getBKInstance().dispatchNow(MainApplication.context, timed, new BKDispatchCallback() {
+            BrandKinesis.getBKInstance().dispatchNow(UpshotApplication.get(), timed, new BKDispatchCallback() {
                 @Override
                 public void onDispatchComplete(final boolean status) {
                     callback.invoke(status);
@@ -166,7 +165,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
     /* Profile Module */
     @ReactMethod
-    private void setUserProfile(final String userData, Callback callback) {
+    private void setUserProfile(final String userData, final Callback callback) {
 
         Map<String, String> predefinedKeys = new HashMap<>();
         predefinedKeys.put("lastName", BKUserInfo.BKUserData.LAST_NAME);
@@ -249,7 +248,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    private  void  getUserDetails(Callback callback) {
+    private  void  getUserDetails(final Callback callback) {
 
         final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
         Set<String> keys = new HashSet<>();
@@ -268,7 +267,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         if (activityType == -1) {
             type = BKActivityTypes.ACTIVITY_ANY;
         }
-        bkInstance.getActivity(MainApplication.context, type, tagName, new BKActivityCallback() {
+        bkInstance.getActivity(UpshotApplication.get(), type, tagName, new BKActivityCallback() {
             @Override
             public void onActivityError(final int i) {
 
@@ -295,7 +294,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
                                                                       final Map<String, Object> map) {
 
                 WritableMap payload = Arguments.createMap();
-                payload.putMap("deepLink", (ReadableMap) map);
+                payload.putMap("deepLink", (WritableMap) map);
                 emitDeviceEvent("UpshotDeepLink", payload);
             }
         });
@@ -331,7 +330,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
             public void brandKinesisActivityPerformedActionWithParams(BKActivityTypes bkActivityTypes, Map<String, Object> map) {
 
                 WritableMap payload = Arguments.createMap();
-                payload.putMap("deepLink", (ReadableMap) map);
+                payload.putMap("deepLink", (WritableMap) map);
                 emitDeviceEvent("UpshotDeepLink", payload);
             }
         });
@@ -341,11 +340,11 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     private void removeTutorials() {
 
         final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
-        bkInstance.removeTutorial(MainApplication.context);
+        bkInstance.removeTutorial(UpshotApplication.get());
     }
 
     @ReactMethod
-    private void fetchInboxInfo(Callback callback) {
+    private void fetchInboxInfo(final Callback callback) {
 
         final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
         bkInstance.fetchInboxInfo(new BKInboxAccessListener() {
@@ -391,7 +390,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod 
-    private void getUserBadges(Callback callback) {
+    private void getUserBadges(final Callback callback) {
 
         final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
         bkInstance.getBadges(new BKBadgeAccessListener() {
@@ -456,7 +455,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
     /* Push Notification Module */
     @ReactMethod
-    private static void registerForPush(final boolean enableForeground, Callback callback) {
+    private static void registerForPush(final boolean enableForeground, final Callback callback) {
 
     }
 
@@ -485,7 +484,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
         BrandKinesis bkInstance = BrandKinesis.getBKInstance();
         try {
-            bkInstance.buildEnhancedPushNotification(MainApplication.get(), jsonToBundle(new JSONObject(pushData)), true);
+            bkInstance.buildEnhancedPushNotification(UpshotApplication.get(), jsonToBundle(new JSONObject(pushData)), true);
         } catch (JSONException e) {
 
         }
@@ -497,7 +496,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
         try {
             final JSONObject jPushPayload = new JSONObject(details);
-            bkInstance.sendPushDetails(MainApplication.context, jsonToHashMap(jPushPayload), new BKPushCompletionBlock() {
+            bkInstance.sendPushDetails(UpshotApplication.get(), jsonToHashMap(jPushPayload), new BKPushCompletionBlock() {
                 @Override
                 public void onBkPushSent(boolean b) {
 
@@ -510,10 +509,10 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
     /* GDPR */
     @ReactMethod
-    private void disableUser(final  boolean shouldDisable, Callback callback) {
+    private void disableUser(final  boolean shouldDisable, final Callback callback) {
 
         final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
-        bkInstance.disableUser(shouldDisable, MainApplication.context, new BrandKinesisUserStateCompletion() {
+        bkInstance.disableUser(shouldDisable, UpshotApplication.get(), new BrandKinesisUserStateCompletion() {
             @Override
             public void userStateCompletion(boolean b) {
                 callback.invoke(b);
@@ -522,14 +521,14 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    private  void getUserId(Callback callback) {
+    private  void getUserId(final Callback callback) {
 
         final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
-        callback.invoke(bkInstance.getUserId(MainApplication.context));
+        callback.invoke(bkInstance.getUserId(UpshotApplication.get()));
     }
 
     @ReactMethod
-    private  void getSDKVersion(Callback callback) {
+    private  void getSDKVersion(final Callback callback) {
 
         final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
         callback.invoke(bkInstance.getSdkVersion());
@@ -538,10 +537,10 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     /* Rewards Module */
 
     @ReactMethod
-    public void getRewardsList(Callback successCallback, Callback errorCallback) {
+    public void getRewardsList(final Callback successCallback, final Callback errorCallback) {
         final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
 
-        bkInstance.getRewardsStatusWithCompletionBlock(MainApplication.context, new BKRewardsResponseListener() {
+        bkInstance.getRewardsStatusWithCompletionBlock(UpshotApplication.get(), new BKRewardsResponseListener() {
             @Override
             public void rewardsResponse(final Object response) {
                 successCallback.invoke(response);
@@ -556,10 +555,10 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void getRewardHistoryForProgram(final String programId, final int historyType, Callback successCallback, Callback failureCallback) {
+    public void getRewardHistoryForProgram(final String programId, final int historyType, final Callback successCallback, final Callback failureCallback) {
         final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
 
-        bkInstance.getRewardHistoryForProgramId(MainApplication.context, programId, historyType,
+        bkInstance.getRewardHistoryForProgramId(UpshotApplication.get(), programId, historyType,
                 new BKRewardsResponseListener() {
                     @Override
                     public void rewardsResponse(final Object response) {
@@ -575,10 +574,10 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void redeemRewardsForProgram(final String programId, final int transactionAmount,
-                                        final int redeemValue, final String tag, Callback successCallback, Callback failureCallback) {
+                                        final int redeemValue, final String tag, final  Callback successCallback, final Callback failureCallback) {
         final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
 
-        bkInstance.redeemRewardsWithProgramId(MainApplication.context, programId, transactionAmount, redeemValue, tag,
+        bkInstance.redeemRewardsWithProgramId(UpshotApplication.get(), programId, transactionAmount, redeemValue, tag,
                 new BKRewardsResponseListener() {
                     @Override
                     public void rewardsResponse(final Object response) {
@@ -593,10 +592,10 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void getRewardRulesforProgram(final String programId, Callback successCallback, Callback failureCallback) {
+    public void getRewardRulesforProgram(final String programId, final Callback successCallback, final Callback failureCallback) {
         final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
 
-        bkInstance.getRewardDetailsForProgramId(MainApplication.context, programId, new BKRewardsResponseListener() {
+        bkInstance.getRewardDetailsForProgramId(UpshotApplication.get(), programId, new BKRewardsResponseListener() {
             @Override
             public void rewardsResponse(final Object response) {
                 successCallback.invoke(response);
@@ -633,7 +632,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         sendDeviceToken(token);        
         WritableMap payload = Arguments.createMap();
         payload.putString("token", token);
-        emitDeviceEvent("UpshotPushToken", token);
+        emitDeviceEvent("UpshotPushToken", payload);
     }
 
     public static void sendPushClickPayload(final String pushPayload) {

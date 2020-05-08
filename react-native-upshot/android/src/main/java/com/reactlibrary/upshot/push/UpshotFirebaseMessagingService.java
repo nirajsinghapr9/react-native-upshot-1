@@ -1,5 +1,8 @@
 package com.reactlibrary.upshot.push;
 
+import android.annotation.SuppressLint;
+import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -9,6 +12,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -106,7 +110,26 @@ notifyIntent.putExtras(bundle);// Create the PendingIntent
 
         notificationManager.notify(notificationId, notificationBuilder.build());
     }
+    public static void addChannelSupport(Context context, Notification.Builder notificationBuilder) {
+        if (Build.VERSION.SDK_INT >= 26) {
+            CharSequence name = "notifications";
+            int importance = 4;
+            NotificationChannel mChannel = new NotificationChannel("notifications", name, NotificationManager.IMPORTANCE_HIGH);
+            @SuppressLint("WrongConstant") NotificationManager notificationManager = (NotificationManager)context.getSystemService("notification");
+            notificationManager.createNotificationChannel(mChannel);
+            notificationBuilder.setChannelId("notifications");
+        }
+    }
 
+    public static void addChannelSupport(Context context, androidx.core.app.NotificationCompat.Builder notificationBuilder) {
+        if (Build.VERSION.SDK_INT >= 26) {
+            CharSequence name = "notifications";
+            NotificationChannel mChannel = new NotificationChannel("notifications", name, NotificationManager.IMPORTANCE_HIGH);
+            @SuppressLint("WrongConstant") NotificationManager notificationManager = (NotificationManager)context.getSystemService("notification");
+            notificationManager.createNotificationChannel(mChannel);
+            notificationBuilder.setChannelId("notifications");
+        }
+    }
     private void sendPushBundletoBK(final Bundle pushBundle, final Context mContext) {
         Log.d(TAG, "Push Bundle: " + pushBundle.toString());
         final boolean allowPushForeground = true;

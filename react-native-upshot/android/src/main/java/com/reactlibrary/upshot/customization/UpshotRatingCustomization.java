@@ -11,7 +11,6 @@ import android.widget.TextView;
 
 import com.brandkinesis.BKUIPrefComponents;
 import com.brandkinesis.BKUIPrefComponents.BKActivityTextViewTypes;
-//import com.pt.bksample.com.pt.bk.PTBKConstants;
 
 import java.util.List;
 
