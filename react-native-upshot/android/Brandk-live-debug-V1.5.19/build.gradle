@@ -1,2 +1,0 @@
-configurations.maybeCreate("default")
-artifacts.add("default", file('BrandKinesis-live-debug-V1.5.19.aar'))

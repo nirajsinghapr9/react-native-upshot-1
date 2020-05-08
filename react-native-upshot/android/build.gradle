@@ -82,7 +82,7 @@ dependencies {
     implementation "androidx.recyclerview:recyclerview:1.1.0"
 
     implementation "android.arch.work:work-runtime:1.0.0"
-
+implementation project(':BrandKinesis-live-release-V1.5.19')
 
 }
 

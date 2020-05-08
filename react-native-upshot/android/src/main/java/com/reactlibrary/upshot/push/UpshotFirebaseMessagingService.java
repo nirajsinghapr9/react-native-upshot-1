@@ -25,7 +25,6 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.Map;
 
-import static com.brandkinesis.push.internal.BKNotificationUtil.addChannelSupport;
 
 /**
  * Created by PurpleTalk on 30/12/16.
