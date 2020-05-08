@@ -1,1 +1,1 @@
-include ':BrandKinesis-live-debug-V1.5.19'
+include ':app',  ':BrandKinesis-live-debug-V1.5.19'
