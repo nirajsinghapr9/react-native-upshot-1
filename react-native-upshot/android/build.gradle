@@ -68,6 +68,9 @@ repositories {
     }
     google()
     jcenter()
+    flatDir {
+        dirs 'libs'
+    }
 }
 
 dependencies {
@@ -81,7 +84,7 @@ dependencies {
     implementation "androidx.recyclerview:recyclerview:1.1.0"
 
     implementation "android.arch.work:work-runtime:1.0.0"
-implementation project(':BrandKinesis-live-release-V1.5.19')
+    implementation(name: 'BrandKinesis-live-release-V1.5.19', ext:'aar')
 
 }
 
@@ -153,7 +156,7 @@ afterEvaluate { project ->
         repositories.mavenDeployer {
             // Deploy to react-native-event-bridge/maven, ready to publish to npm
             repository url: "file://${projectDir}/../android/maven"
-            configureReactNativePom pom
+            configureReactNativePom pom;''
         }
     }
 }
