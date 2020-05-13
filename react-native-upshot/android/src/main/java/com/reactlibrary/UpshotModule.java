@@ -156,8 +156,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     private void createLocationEvent(final String latitude, final String longitude) {
         try {
             final String eventID = BrandKinesis.getBKInstance().createLocationEvent(Double.parseDouble(latitude),
-                    Double.parseDouble(longitude));
-            Log.i("createLocationEvent", "eventId" + eventID);
+                    Double.parseDouble(longitude));            
         } catch (final Exception e) {
             e.printStackTrace();
         }
@@ -636,11 +635,10 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     }
 
     public static void sendPushClickPayload(final String pushPayload) {
-
-        //send push payload to app
+        
         WritableMap payload = Arguments.createMap();
-        payload.putString("UpshotPushPayload", pushPayload);
-        emitDeviceEvent("payload", payload);
+        payload.putString("payload", pushPayload);
+        emitDeviceEvent("UpshotPushPayload", payload);
     }
 
 
@@ -650,11 +648,10 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         JSONObject json = new JSONObject();
         Set<String> keys = bundle.keySet();
         for (String key : keys) {
-            try {
-                // json.put(key, bundle.get(key)); see edit below
+            try {                
                 json.put(key, JSONObject.wrap(bundle.get(key)));
             } catch(JSONException e) {
-                //Handle exception here
+                
             }
     }
         return json.toString();
@@ -683,12 +680,6 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         }
         return data;
     }
-
-//    public static void pushCallback(final String pushPayload) {
-//
-//        reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit("push-callback",
-//                pushPayload);
-//    }
 
     public static WritableMap convertJsonToMap(JSONObject jsonObject) throws JSONException {
         WritableMap map = new WritableNativeMap();
