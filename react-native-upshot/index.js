@@ -1,4 +1,5 @@
 import { NativeModules, NativeEventEmitter} from 'react-native';
+import { UpshotActivityType } from './UpshotConstants'
 
 const UpshotReact = NativeModules.UpshotReact;
 var upshotEmitter = new NativeEventEmitter(UpshotReact)
@@ -300,4 +301,6 @@ var Upshot = {
 },
 };
 
-module.exports = Upshot
+export { UpshotActivityType }
+
+export default Upshot;

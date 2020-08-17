@@ -52,7 +52,7 @@ typedef NS_ENUM(NSInteger, BKActivityButtonType) {
     
 };
 
-typedef NS_ENUM (NSInteger, BKActivityLabelType){
+typedef NS_ENUM (NSInteger, BKActivityLabelType) {
     /*!
      Label For question in Survey, Rating, Opinion_poll And Trivia view
      */
@@ -297,6 +297,9 @@ typedef NS_ENUM(NSInteger, BKActivityColorType) {
     BKActivityNPSDefaultBorderColor,
     
     BKActivityNPSSelectedBorderColor,
+    
+    BKActivityOptionDefaultBorderColor,
+    BKActivityOptionSelectedBorderColor,
 
 };
 

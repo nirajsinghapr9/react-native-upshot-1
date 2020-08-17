@@ -293,7 +293,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
                                                                       final Map<String, Object> map) {
 
                 WritableMap payload = Arguments.createMap();
-                payload.putMap("deepLink", map.get("deepLink"));
+                payload.putMap("deepLink", (ReadableMap) map.get("deepLink"));
                 emitDeviceEvent("UpshotDeepLink", payload);
             }
         });
@@ -329,7 +329,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
             public void brandKinesisActivityPerformedActionWithParams(BKActivityTypes bkActivityTypes, Map<String, Object> map) {
 
                 WritableMap payload = Arguments.createMap();
-                payload.putMap("deepLink", (WritableMap) map);
+                payload.putMap("deepLink", (ReadableMap) map.get("deepLink"));
                 emitDeviceEvent("UpshotDeepLink", payload);
             }
         });

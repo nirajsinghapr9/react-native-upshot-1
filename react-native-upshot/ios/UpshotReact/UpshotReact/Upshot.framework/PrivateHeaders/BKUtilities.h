@@ -50,6 +50,8 @@
 
 + (CGFloat)getContentSize:(NSString *)content width:(CGFloat)width andLabel:(UILabel *)label;
 
++ (CGFloat)getHeightWithDefaultLabel:(NSString *)content width:(CGFloat)width;
+
 + (void)doBubbleAnimationWithSubViews:(UIView *)view andbutton:(UIButton *)skipButton;
 
 + (CGFloat)getTextViewHeightDynamicallay:(UITextView *)textView withWidth:(CGFloat )width;

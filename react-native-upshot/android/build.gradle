@@ -84,7 +84,7 @@ dependencies {
     implementation "androidx.recyclerview:recyclerview:1.1.0"
 
     implementation "android.arch.work:work-runtime:1.0.0"
-    implementation(name: 'BrandKinesis-live-release-V1.5.19', ext:'aar')
+    implementation(name: 'BrandKinesis', ext:'aar')
 
 }
 

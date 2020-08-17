@@ -22,7 +22,7 @@ Pod::Spec.new do |s|
 
   s.dependency "React"
   
-  s.dependency "Upshot-iOS-SDK"
+  s.dependency "./ios/UpshotReact/UpshotReact/Upshot.framework"
 end
 
 

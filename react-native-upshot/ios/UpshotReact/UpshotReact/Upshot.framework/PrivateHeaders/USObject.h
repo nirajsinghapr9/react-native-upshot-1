@@ -19,4 +19,6 @@
 
 - (id)checkValueForKey:(id)key isEmptyFromDictionary:(NSDictionary *)dict;
 
+- (id)validateString:(id)object;
+
 @end

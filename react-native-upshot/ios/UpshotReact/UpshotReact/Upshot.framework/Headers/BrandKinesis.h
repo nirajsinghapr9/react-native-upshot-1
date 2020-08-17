@@ -4,7 +4,7 @@
 //
 //  Created by [x]cube LABS on 20/08/14.
 //  Copyright (c) 2014 [x]cube LABS. All rights reserved.
-//
+//  Upshot Version 1.6
 
 #import <Foundation/Foundation.h>
 #import <CoreLocation/CoreLocation.h>
