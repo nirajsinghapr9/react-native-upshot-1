@@ -1,5 +1,5 @@
 import { NativeModules, NativeEventEmitter} from 'react-native';
-import { UpshotActivityType } from './UpshotConstants'
+import { UpshotActivityType, UpshotGender, UpshotMaritalStatus, UpshotRewardHistory } from './UpshotConstants'
 
 const UpshotReact = NativeModules.UpshotReact;
 var upshotEmitter = new NativeEventEmitter(UpshotReact)
@@ -251,7 +251,7 @@ var Upshot = {
     */
     getRewardHistoryForProgram: function(programId, historyType, successCallback, failureCallback) {
 
-        UpshotReact.getRewardHistoryForProgram()
+        UpshotReact.getRewardHistoryForProgram(programId, historyType, successCallback, failureCallback);
     },
 
     /** 
@@ -301,6 +301,6 @@ var Upshot = {
 },
 };
 
-export { UpshotActivityType }
+export { UpshotActivityType, UpshotGender, UpshotMaritalStatus, UpshotRewardHistory }
 
 export default Upshot;

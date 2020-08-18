@@ -12,4 +12,30 @@ const UpshotActivityType = {
     miniGame: 13
 }
 
-export { UpshotActivityType }
+const UpshotGender = {
+
+    male: 1,
+    female: 2,
+    other: 3,
+    reset: 4
+}
+
+const UpshotMaritalStatus = {
+
+    single: 1,
+    engaged: 2,
+    married: 3,
+    widow: 4,
+    divorced: 5,
+    Reset: 6,
+}
+
+const UpshotRewardHistory = {
+    entire = 0,
+    earn = 1,
+    expiry = 2,
+    redeem = 3,
+    negative = 4
+}
+
+export { UpshotActivityType, UpshotGender, UpshotMaritalStatus, UpshotRewardHistory }
