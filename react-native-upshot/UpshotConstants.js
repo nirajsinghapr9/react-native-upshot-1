@@ -31,11 +31,11 @@ const UpshotMaritalStatus = {
 }
 
 const UpshotRewardHistory = {
-    entire = 0,
-    earn = 1,
-    expiry = 2,
-    redeem = 3,
-    negative = 4
+    entire: 0,
+    earn: 1,
+    expiry: 2,
+    redeem: 3,
+    negative: 4
 }
 
 export { UpshotActivityType, UpshotGender, UpshotMaritalStatus, UpshotRewardHistory }
