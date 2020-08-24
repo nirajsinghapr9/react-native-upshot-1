@@ -10,10 +10,17 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.StrictMode;
+import android.view.View;
 
 import com.brandkinesis.BrandKinesis;
+import com.brandkinesis.activitymanager.BKActivityTypes;
 import com.brandkinesis.callback.BKAuthCallback;
+import com.brandkinesis.callback.BrandKinesisCallback;
 import com.brandkinesis.utils.BKAppStatusUtil;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class UpshotApplication extends Application implements BKAppStatusUtil.BKAppStatusListener {
 
@@ -66,6 +73,68 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
 
     public static void initBrandKinesis(Activity activity) {
         try {
+            BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+            bkInstance.setBrandkinesisCallback(new BrandKinesisCallback() {
+                @Override
+                public void onActivityError(int i) {
+
+                }
+
+                @Override
+                public void onActivityCreated(BKActivityTypes bkActivityTypes) {
+                    UpshotModule.upshotActivityCreated(bkActivityTypes);
+                }
+
+                @Override
+                public void onActivityDestroyed(BKActivityTypes bkActivityTypes) {
+                    UpshotModule.upshotActivityDestroyed(bkActivityTypes);
+                }
+
+                @Override
+                public void brandKinesisActivityPerformedActionWithParams(BKActivityTypes bkActivityTypes, Map<String, Object> map) {
+                    UpshotModule.upshotDeeplinkCallback(bkActivityTypes, map);
+                }
+
+                @Override
+                public void onAuthenticationError(String s) {
+
+                }
+
+                @Override
+                public void onAuthenticationSuccess() {
+
+                }
+
+                @Override
+                public void onBadgesAvailable(HashMap<String, List<HashMap<String, Object>>> hashMap) {
+
+                }
+
+                @Override
+                public void getBannerView(View view, String s) {
+
+                }
+
+                @Override
+                public void onErrorOccurred(int i) {
+
+                }
+
+                @Override
+                public void onMessagesAvailable(List<HashMap<String, Object>> list) {
+
+                }
+
+                @Override
+                public void onUserInfoUploaded(boolean b) {
+
+                }
+
+                @Override
+                public void userStateCompletion(boolean b) {
+
+                }
+            });
             BrandKinesis.initialiseBrandKinesis(activity, new BKAuthCallback() {
                 @Override
                 public void onAuthenticationError(String errorMsg) {

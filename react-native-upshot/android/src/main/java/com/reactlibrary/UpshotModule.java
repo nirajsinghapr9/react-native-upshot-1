@@ -34,6 +34,7 @@ import com.brandkinesis.callback.BKDispatchCallback;
 import com.brandkinesis.callback.BKInboxAccessListener;
 import com.brandkinesis.callback.BKPushCompletionBlock;
 import com.brandkinesis.callback.BKUserInfoCallback;
+import com.brandkinesis.callback.BrandKinesisCallback;
 import com.brandkinesis.callback.BrandKinesisUserStateCompletion;
 import com.brandkinesis.rewards.BKRewardsResponseListener;
 import com.brandkinesis.utils.BKUtilLogger;
@@ -274,27 +275,19 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
             @Override
             public void onActivityCreated(final BKActivityTypes bkActivityTypes) {
-
-                WritableMap payload = Arguments.createMap();
-                payload.putInt("activityType", bkActivityTypes.getValue());
-                emitDeviceEvent("UpshotActivityDidAppear", payload);
+                upshotActivityCreated(bkActivityTypes);
             }
 
             @Override
             public void onActivityDestroyed(final BKActivityTypes bkActivityTypes) {
 
-                WritableMap payload = Arguments.createMap();
-                payload.putInt("activityType", bkActivityTypes.getValue());
-                emitDeviceEvent("UpshotActivityDidDismiss", payload);
+                upshotActivityDestroyed(bkActivityTypes);
             }
 
             @Override
             public void brandKinesisActivityPerformedActionWithParams(final BKActivityTypes bkActivityTypes,
                                                                       final Map<String, Object> map) {
-
-                WritableMap payload = Arguments.createMap();
-                payload.putMap("deepLink", (ReadableMap) map.get("deepLink"));
-                emitDeviceEvent("UpshotDeepLink", payload);
+                upshotDeeplinkCallback(bkActivityTypes, map);
             }
         });
     }
@@ -311,26 +304,17 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
             @Override
             public void onActivityCreated(BKActivityTypes bkActivityTypes) {
-
-                WritableMap payload = Arguments.createMap();
-                payload.putInt("activityType", bkActivityTypes.getValue());
-                emitDeviceEvent("UpshotActivityDidAppear", payload);
+                upshotActivityCreated(bkActivityTypes);
             }
 
             @Override
             public void onActivityDestroyed(BKActivityTypes bkActivityTypes) {
-
-                WritableMap payload = Arguments.createMap();
-                payload.putInt("activityType", bkActivityTypes.getValue());
-                emitDeviceEvent("UpshotActivityDidDismiss", payload);
+                upshotActivityDestroyed(bkActivityTypes);
             }
 
             @Override
             public void brandKinesisActivityPerformedActionWithParams(BKActivityTypes bkActivityTypes, Map<String, Object> map) {
-
-                WritableMap payload = Arguments.createMap();
-                payload.putMap("deepLink", (ReadableMap) map.get("deepLink"));
-                emitDeviceEvent("UpshotDeepLink", payload);
+                upshotDeeplinkCallback(bkActivityTypes, map);
             }
         });
     }
@@ -621,7 +605,28 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         sendRegistrationToServer(FirebaseInstanceId.getInstance().getToken());
         emitDeviceEvent("UpshotAuthStatus", payload);
     }
-    
+
+    public static void upshotDeeplinkCallback(final BKActivityTypes bkActivityTypes,
+                                              final Map<String, Object> map) {
+
+        WritableMap payload = Arguments.createMap();
+        payload.putString("deepLink", map.get("deepLink").toString());
+        emitDeviceEvent("UpshotDeepLink", payload);
+    }
+
+    public static void upshotActivityCreated(final BKActivityTypes bkActivityTypes) {
+
+        WritableMap payload = Arguments.createMap();
+        payload.putInt("activityType", bkActivityTypes.getValue());
+        emitDeviceEvent("UpshotActivityDidAppear", payload);
+    }
+
+    public static void upshotActivityDestroyed(final BKActivityTypes bkActivityTypes) {
+
+        WritableMap payload = Arguments.createMap();
+        payload.putInt("activityType", bkActivityTypes.getValue());
+        emitDeviceEvent("UpshotActivityDidDismiss", payload);
+    }
 
     public static void sendRegistrationToServer(String token) {
 
