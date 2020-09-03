@@ -12,6 +12,9 @@
 @import Upshot;
 
 @interface UpshotReact : RCTEventEmitter <RCTBridgeModule, BrandKinesisDelegate, UNUserNotificationCenterDelegate>
-@property (nonatomic, assign) BOOL allowForegroundPush;
+
++ (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken;
+
++ (void)didReceiveRemoteNotification:(NSDictionary *)notification;
 
 @end

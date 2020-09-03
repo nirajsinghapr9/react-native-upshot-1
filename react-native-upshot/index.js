@@ -163,9 +163,9 @@ var Upshot = {
     * @param {boolean} enableForeground - show push notification in foreground
     * @param {function(status)} callback - get the status of push registration
     */
-    registerForPush: function(enableForeground, callback) {
+    registerForPush: function(callback) {
 
-        UpshotReact.registerForPush(enableForeground, callback);
+        UpshotReact.registerForPush(callback);
     },
 
     /** 
