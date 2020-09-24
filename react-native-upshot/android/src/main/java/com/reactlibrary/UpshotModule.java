@@ -438,8 +438,17 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
     /* Push Notification Module */
     @ReactMethod
-    private static void registerForPush(final boolean enableForeground, final Callback callback) {
+    private static void registerForPush(final Callback callback) {
 
+    }
+    
+    @ReactMethod
+    private static void shouldPresentOthersPushNotification(final boolean allow) {
+        
+        SharedPreferences sharedPreferences = getSharedPreferences("UpshotPushPermission", MODE_PRIVATE);
+        SharedPreferences.Editor preferenceEditor = sharedPreferences.edit();
+        preferenceEditor.putBoolean("UpshotPermissionState", allow);
+        preferenceEditor.commit();
     }
 
     @ReactMethod
@@ -463,11 +472,11 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public static void sendPushDataToUpshot(final String pushData){
+    public static void sendPushDataToUpshot(Context context, final String pushData, final boolean allowForeground){
 
         BrandKinesis bkInstance = BrandKinesis.getBKInstance();
         try {
-            bkInstance.buildEnhancedPushNotification(UpshotApplication.get(), jsonToBundle(new JSONObject(pushData)), true);
+            bkInstance.buildEnhancedPushNotification(context, jsonToBundle(new JSONObject(pushData)), allowForeground);
         } catch (JSONException e) {
 
         }
@@ -488,6 +497,13 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         } catch (final JSONException e) {
 
         }
+    }
+
+    @ReactMethod
+    private void sendPushClickPayloadToUpshot(Context context, final String payload){
+
+        BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        bkInstance.handlePushNotification(context, jsonToBundle(new JSONObject(pushData)));
     }
 
     /* GDPR */

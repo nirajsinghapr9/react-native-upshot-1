@@ -44,21 +44,23 @@ public class UpshotFirebaseMessagingService extends FirebaseMessagingService {
         }
 
         if (bundle.containsKey("bk")) {
-
-//            bundle.putInt(BrandKinesis.BK_LOLLIPOP_NOTIFICATION_ICON, R.drawable.not_selected);
-            bundle.putInt(BrandKinesis.BK_LOLLIPOP_NOTIFICATION_ICON_BG_COLOR, Color.BLUE);
             sendPushBundletoBK(bundle, this);
         } else {
+
+            SharedPreferences sharedPreferences = getSharedPreferences("UpshotPushPermission", MODE_PRIVATE);
+            boolean allow = sharedPreferences.getBoolean("UpshotPermissionState", false);
+            if(!allow){return;}
             String title = "";
             String text = "";
             try {
-
                 title = bundle.getString("title");
                 text = bundle.getString("body");
             } catch (Exception e) {
             }
             //TODO have to handle application
-            sendNotification(title, text,bundle);
+            if (!title.isEmpty() && !text.isEmpty()) {
+                sendNotification(title, text,bundle);
+            }            
         }
     }
 
@@ -83,7 +85,7 @@ public class UpshotFirebaseMessagingService extends FirebaseMessagingService {
         int notificationId = UpshotEnhancedPushUtils.getIdFromTimestamp();
         Intent notifyIntent = new Intent(this, mainActivity);
         notifyIntent.putExtra("push", true);
-notifyIntent.putExtras(bundle);// Create the PendingIntent
+        notifyIntent.putExtras(bundle);// Create the PendingIntent
         PendingIntent pendingIntent = PendingIntent.getActivity(
                 this, notificationId, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT
         );

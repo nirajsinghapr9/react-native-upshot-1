@@ -159,13 +159,21 @@ var Upshot = {
 
     /** 
     *  register for push
-    *  requires for only ios
-    * @param {boolean} enableForeground - show push notification in foreground
+    *  requires for only ios 
     * @param {function(status)} callback - get the status of push registration
     */
     registerForPush: function(callback) {
 
         UpshotReact.registerForPush(callback);
+    },
+
+    /** 
+    *  Show Pushnotification not from Upshot also
+    *  requires for only Android 
+    * @param {boolean} shouldAllow - 
+    */
+    showOtherPushNotifications: function(shouldAllow) {
+        UpshotReact.showOtherPushNotifications(shouldAllow);
     },
 
     /** 
@@ -181,11 +189,24 @@ var Upshot = {
     /** 
     *  Send push click payload to Upshot
     *  
+    * @param {Context} context - Application Context
     * @param {string} pushPayload - push click payload
     */
-    sendPushDataToUpshot: function(pushPayload) {
+    sendPushDataToUpshot: function(context, pushPayload) {
 
-        UpshotReact.sendPushDataToUpshot(pushPayload);
+        UpshotReact.sendPushClickPayloadToUpshot(context, pushPayload);
+    },
+
+    /** 
+    *  Send push bundle data to present push notification
+    * 
+    * @param {Context} context - Application Context
+    * @param {string} bundleData - Push Bundle
+    * @param {bool} shouldAllowForeground - Should present push notification in foreground
+    */
+    showUpshotPushNotification: function(context, bundleData, shouldAllowForeground) {
+
+        UpshotReact.sendPushDataToUpshot(context, bundleData, shouldAllowForeground);
     },
 
     /** 
