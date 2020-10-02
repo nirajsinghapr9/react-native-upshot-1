@@ -1,5 +1,5 @@
 import { NativeModules, NativeEventEmitter} from 'react-native';
-import { UpshotActivityType, UpshotGender, UpshotMaritalStatus, UpshotRewardHistory } from './UpshotConstants'
+import { UpshotActivityType, UpshotGender, UpshotMaritalStatus, UpshotRewardHistory, UpshotInitOptions} from './UpshotConstants'
 
 const UpshotReact = NativeModules.UpshotReact;
 var upshotEmitter = new NativeEventEmitter(UpshotReact)
@@ -14,8 +14,24 @@ var Upshot = {
 
     initializeUpshot: function() {
         UpshotReact.initializeUpshot();
+    },         
+
+    /**
+    * initialize Upshot using options
+    * Authentication status will be notified through event listener
+    * @param {string} Options - initialize options
+    */
+    initializeUpshotUsingOptions: function(Options) {
+        UpshotReact.initializeUpshotUsingOptions(Options);
     },
-         
+
+    /** 
+    * terminate Upshot
+    *     
+    */
+    terminate: function() {
+        UpshotReact.terminate();
+    },
 
     /**
     * Create PageView / ScreenView event
@@ -30,7 +46,7 @@ var Upshot = {
     /**
     * Create custom event
     *  
-    * @param {string} eventName - the current screen name
+    * @param {string} eventName - custom event name
     * @param {string} payload - the payload should be json string
     * @param {boolean} isTimed - isTimed true for Timed events
     * @param {function(eventId)} callback - on success of event creation will get eventId else null as a callback 
@@ -81,15 +97,25 @@ var Upshot = {
     * @param {string} longitude - longitude
     */
     createLocationEvent: function(latitude, longitude) {
-
         UpshotReact.createLocationEvent(latitude, longitude);
+    },
+
+
+    /** 
+    *  Create attribution event 
+    *  
+    * @param {string} payload - the payload should be json string
+    * @param {function(eventId)} callback - on success of event creation will get eventId else null as a callback 
+    */
+    createAttributionEvent: function(payload, callback) {
+        UpshotReact.createAttributionEvent(payload, callback);
     },
 
     
     /** 
     *  Send user details to upshot
     *  
-    * @param {string} userData - userData is jsonString
+    * @param {string} userData - userData should be json string
     * @param {function(status)} callback - get the status of profile updation
     */
     setUserProfile: function(userData, callback) {
@@ -110,7 +136,7 @@ var Upshot = {
     /** 
     *  Show Activity with type and tag
     *      
-    * @param {Int} activityType - activityType will get from dashboard
+    * @param {UpshotActivityType} activityType - enum value get it from UpshotConstants
     * @param {string} tag - requested tag
     */
     showActivityWithType: function(type, tag) {
@@ -140,7 +166,7 @@ var Upshot = {
     /** 
     *  get list of campaign data from Upshot
     *      
-    * @param {function(response)} callback - get json string as a callback with list of user details
+    * @param {function(response)} callback - get json string as a callback with list of campaign details
     */
 
     fetchInboxInfo: function(callback) {
@@ -151,29 +177,23 @@ var Upshot = {
     /** 
     *  get list of user badges from Upshot
     *      
-    * @param {function(response)} callback - get json string as a callback with list of user details
+    * @param {function(response)} callback - get json string as a callback with list of active and Inactive badges
     */
     getUserBadges: function(callback) {
         UpshotReact.getUserBadges(callback);
     },
 
+    /** Push Notification Module */
+
     /** 
     *  register for push
-    *  requires for only ios 
+    *  requires for only ios
+    * 
     * @param {function(status)} callback - get the status of push registration
     */
     registerForPush: function(callback) {
 
         UpshotReact.registerForPush(callback);
-    },
-
-    /** 
-    *  Show Pushnotification not from Upshot also
-    *  requires for only Android 
-    * @param {boolean} shouldAllow - 
-    */
-    showOtherPushNotifications: function(shouldAllow) {
-        UpshotReact.showOtherPushNotifications(shouldAllow);
     },
 
     /** 
@@ -189,24 +209,21 @@ var Upshot = {
     /** 
     *  Send push click payload to Upshot
     *  
-    * @param {Context} context - Application Context
     * @param {string} pushPayload - push click payload
     */
-    sendPushDataToUpshot: function(context, pushPayload) {
+    sendPushDataToUpshot: function(pushPayload) {
 
-        UpshotReact.sendPushClickPayloadToUpshot(context, pushPayload);
+        UpshotReact.sendPushDataToUpshot(pushPayload);
     },
 
     /** 
-    *  Send push bundle data to present push notification
-    * 
-    * @param {Context} context - Application Context
-    * @param {string} bundleData - Push Bundle
-    * @param {bool} shouldAllowForeground - Should present push notification in foreground
+    *  Send Push bundle data to present push notification via Upshot. Android Specific
+    *  
+    * @param {string} pushPayload - push bundle
     */
-    showUpshotPushNotification: function(context, bundleData, shouldAllowForeground) {
+    displayNotification: function(pushPayload) {
 
-        UpshotReact.sendPushDataToUpshot(context, bundleData, shouldAllowForeground);
+        UpshotReact.displayNotification(pushPayload);   
     },
 
     /** 
@@ -299,15 +316,7 @@ var Upshot = {
     redeemRewardsForProgram: function(programId, transactionValue, redeemValue, tag, successCallback, failurecallback) {
 
         UpshotReact.redeemRewardsForProgram(programId, transactionValue, redeemValue, tag, successCallback, failurecallback);        
-    },
-
-    /** 
-    * terminate Upshot
-    *     
-    */
-    terminate: function() {
-        UpshotReact.terminate();
-    },
+    },   
 
     /**
     * Add Upshot event listener
@@ -322,6 +331,6 @@ var Upshot = {
 },
 };
 
-export { UpshotActivityType, UpshotGender, UpshotMaritalStatus, UpshotRewardHistory }
+export { UpshotActivityType, UpshotGender, UpshotMaritalStatus, UpshotRewardHistory, UpshotInitOptions}
 
 export default Upshot;

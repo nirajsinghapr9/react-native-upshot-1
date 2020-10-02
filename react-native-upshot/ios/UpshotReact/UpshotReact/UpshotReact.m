@@ -38,33 +38,65 @@ RCT_EXPORT_METHOD(initializeUpshot) {
     [[BrandKinesis sharedInstance] initializeWithDelegate:self];
 }
 
+RCT_EXPORT_METHOD(initializeUpshotUsingOptions:(NSString *_Nonnull)options) {
+    
+    NSDictionary *json = [UpshotUtility convertJsonStringToJson:options];
+    NSMutableDictionary *initOptions = [[NSMutableDictionary alloc] init];
+    if ([json valueForKey:@"bkApplicationID"]) {
+        [initOptions setValue:json[@"bkApplicationID"] forKey:BKApplicationID];
+    }
+    if ([json valueForKey:@"bkApplicationOwnerID"]) {
+        [initOptions setValue:json[@"bkApplicationOwnerID"] forKey:BKApplicationOwnerID];
+    }
+    if ([json valueForKey:@"bkFetchLocation"]) {
+        [initOptions setValue:[NSNumber numberWithBool:[json[@"bkFetchLocation"] boolValue]] forKey:BKFetchLocation];
+    }
+    if ([json valueForKey:@"bkExceptionHandler"]) {
+        [initOptions setValue:[NSNumber numberWithBool:[json[@"bkExceptionHandler"] boolValue]] forKey:BKExceptionHandler];
+    }
+    [[BrandKinesis sharedInstance] initializeWithOptions:initOptions delegate:self];
+}
 
-#pragma mark PageViewEvent
+#pragma mark Terminate
+
+RCT_EXPORT_METHOD(terminate) {
+    
+    [[BrandKinesis sharedInstance] terminate];
+}
+
+#pragma mark Events
 
 RCT_EXPORT_METHOD(createPageViewEvent:(NSString *_Nonnull)currentPage callback:(RCTResponseSenderBlock)callback) {
     
+    NSString *eventId = nil;
     if (currentPage && ![currentPage isEqualToString:@""]) {
-      NSString *eventId = [[BrandKinesis sharedInstance] createEvent:BKPageViewNative params:@{BKCurrentPage: currentPage} isTimed:YES];
-      callback(@[eventId]);
-    } else {
-      callback(@[[NSNull null]]);
+        eventId = [[BrandKinesis sharedInstance] createEvent:BKPageViewNative params:@{BKCurrentPage: currentPage} isTimed:YES];
+    }
+    
+    if (callback != nil) {
+        if (eventId != nil) {
+            callback(@[eventId]);
+        } else{
+            callback(@[[NSNull null]]);
+        }
     }
 }
-
-#pragma mark CustomEvent
 
 RCT_EXPORT_METHOD(createCustomEvent:(NSString *_Nonnull)eventName payload:(NSString *)payload timed:(BOOL)isTimed callback:(RCTResponseSenderBlock)callback) {
     
+    NSString *eventId = nil;
     if (eventName && ![eventName isEqualToString: @""]) {
         NSDictionary *eventPayload = [UpshotUtility convertJsonStringToJson:payload];
         NSString *eventId = [[BrandKinesis sharedInstance] createEvent:eventName params:eventPayload isTimed:isTimed];
-        callback(@[eventId]);
-    } else {
-      callback(@[[NSNull null]]);
+    }
+    if (callback != nil) {
+        if (eventId != nil) {
+            callback(@[eventId]);
+        } else{
+            callback(@[[NSNull null]]);
+        }
     }
 }
-
-#pragma mark Close And Dispatch Events
 
 RCT_EXPORT_METHOD(setValueAndClose:(NSString *)payload forEvent:(NSString *_Nonnull)eventId) {
     
@@ -80,17 +112,34 @@ RCT_EXPORT_METHOD(closeEventForId:(NSString *_Nonnull)eventId) {
 RCT_EXPORT_METHOD(dispatchEventsWithTimedEvents:(BOOL)timed callback:(RCTResponseSenderBlock)callback) {
     
     [[BrandKinesis sharedInstance] dispatchEventsWithTimedEvents:timed completionBlock:^(BOOL dispatched) {
-        callback(@[[NSNumber numberWithBool:dispatched]]);
+        if (callback != nil) {
+            callback(@[[NSNumber numberWithBool:dispatched]]);
+        }        
     }];
 }
-
-#pragma mark LocationEvent
 
 RCT_EXPORT_METHOD(createLocationEvent:(NSString *_Nonnull)latitude longitude:(NSString *_Nonnull)longitude) {
     
     CGFloat lat = [latitude floatValue];
     CGFloat lon = [longitude floatValue];
     [[BrandKinesis sharedInstance] createLocationEvent:lat longitude:lon];
+}
+
+
+RCT_EXPORT_METHOD(createAttributionEvent:(NSString *)payload callback:(RCTResponseSenderBlock)callback) {
+    
+    NSString *eventId = nil;
+    if (payload && ![payload isEqualToString: @""]) {
+        NSDictionary *eventPayload = [UpshotUtility convertJsonStringToJson:payload];
+        NSString *eventId = [[BrandKinesis sharedInstance] createAttributionEvent:eventPayload];
+    }
+    if (callback != nil) {
+        if (eventId != nil) {
+            callback(@[eventId]);
+        } else{
+            callback(@[[NSNull null]]);
+        }
+    }
 }
 
 #pragma mark UserProfile
@@ -265,13 +314,6 @@ RCT_EXPORT_METHOD(redeemRewardsForProgram:(NSString *)programId transactionAmoun
           successCallback(@[jsonString]);
         }
     }];
-}
-
-#pragma mark Terminate
-
-RCT_EXPORT_METHOD(terminate) {
-    
-    [[BrandKinesis sharedInstance] terminate];
 }
 
 - (void)startObserving {

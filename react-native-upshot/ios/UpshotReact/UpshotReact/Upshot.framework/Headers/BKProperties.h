@@ -67,6 +67,7 @@ typedef NS_ENUM(NSUInteger, BKEventSubType){
     BKEventSessionStarted        = 100,
     BKEventSessionInterrupted    = 101,
     BKEventSessionCompleted      = 102,
+    BKEventAttribution           = 104,
 
     /*Pageview*/
     BKEventPageViewNative        = 112,

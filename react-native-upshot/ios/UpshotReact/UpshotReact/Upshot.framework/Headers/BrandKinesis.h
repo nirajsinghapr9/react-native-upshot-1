@@ -4,7 +4,7 @@
 //
 //  Created by [x]cube LABS on 20/08/14.
 //  Copyright (c) 2014 [x]cube LABS. All rights reserved.
-//  Upshot Version 1.6
+//  Upshot Version 1.6.1
 
 #import <Foundation/Foundation.h>
 #import <CoreLocation/CoreLocation.h>
@@ -125,6 +125,11 @@ BK_EXTERN NSString *_Null_unspecified const BKPushValueUrl;
 BK_EXTERN NSString *_Null_unspecified const BKPushAppId;
 BK_EXTERN NSString *_Null_unspecified const BKPushAccountId;
 
+BK_EXTERN NSString *_Null_unspecified const BKAttributionSource;
+BK_EXTERN NSString *_Null_unspecified const BKUTM_Source;
+BK_EXTERN NSString *_Null_unspecified const BKUTM_Medium;
+BK_EXTERN NSString *_Null_unspecified const BKUTM_Campaign;
+
 @interface BrandKinesis : NSObject
 
 @property (nonatomic, strong, nullable) NSDictionary *applicationLaunchOptions;
@@ -242,6 +247,7 @@ BK_EXTERN NSString *_Null_unspecified const BKPushAccountId;
  */
 - (void)createLocationEvent:(CGFloat)latitude longitude:(CGFloat)longitude;
 
+- (nullable NSString *)createAttributionEvent:(nonnull NSDictionary *)payload;
 
 /*!
  @brief Add additional data to the created event

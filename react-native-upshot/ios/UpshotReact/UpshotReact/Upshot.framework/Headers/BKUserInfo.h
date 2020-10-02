@@ -130,6 +130,7 @@ typedef NS_ENUM(NSUInteger, BKMaritalStatus){
 @property (nonatomic, strong, nullable) BKDob         * dateOfBirth;
 @property (nonatomic, strong, nullable) BKExternalId  * externalId;// should change this to externalIds
 @property (nonatomic, strong, nullable) NSDictionary  * others;
+@property (nonatomic, strong, nullable) NSDictionary  * attribution;
 
 /*!
  @brief once the object is created use this method to send the packet to server

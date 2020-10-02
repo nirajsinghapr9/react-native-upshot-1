@@ -38,4 +38,13 @@ const UpshotRewardHistory = {
     negative: 4
 }
 
-export { UpshotActivityType, UpshotGender, UpshotMaritalStatus, UpshotRewardHistory }
+const UpshotInitOptions = {
+    AppId: "bkApplicationID",
+    OwnerId: "bkApplicationOwnerID",
+    ExternalStorage: "bkStorageAppMemory",
+    EnableLocation: "bkFetchLocation",
+    EnableCrashLog: "bkExceptionHandler"    
+}
+
+
+export { UpshotActivityType, UpshotGender, UpshotMaritalStatus, UpshotRewardHistory, UpshotInitOptions}
