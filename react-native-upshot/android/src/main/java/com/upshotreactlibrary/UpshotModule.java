@@ -41,6 +41,7 @@ import com.brandkinesis.callback.BrandKinesisCallback;
 import com.brandkinesis.callback.BrandKinesisUserStateCompletion;
 import com.brandkinesis.rewards.BKRewardsResponseListener;
 import com.brandkinesis.utils.BKUtilLogger;
+import com.facebook.react.BuildConfig;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -53,6 +54,7 @@ import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.Callback;
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.upshotreactlibrary.upshot.push.UpshotPushAction;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -98,22 +100,23 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void initializeUpshot() {
 
+        UpshotApplication.initType = "Config";
+        if (UpshotApplication.initType == null) {
+            UpshotApplication.initUpshotUsingConfig();
+        }
     }
 
     @ReactMethod
     public void initializeUpshotUsingOptions(final String options) {
 
-        try {
-            InputStream inputStream = reactContext.getApplicationContext().getAssets().open("UpshotConfig.json");
-        } catch (IOException e) {
-            if (UpshotApplication.options == null) {
-                try {
-                    UpshotApplication.options = jsonToBundle(new JSONObject(options));
-                    UpshotApplication.initUpshotUsingOptions(jsonToBundle(new JSONObject(options)));
-                } catch (JSONException s) {
-                    if (BuildConfig.DEBUG) {
-                        s.printStackTrace();
-                    }
+        UpshotApplication.initType = "Options";
+        if (UpshotApplication.options == null) {
+            try {
+                UpshotApplication.options = jsonToBundle(new JSONObject(options));
+                UpshotApplication.initUpshotUsingOptions(jsonToBundle(new JSONObject(options)));
+            } catch (JSONException s) {
+                if (BuildConfig.DEBUG) {
+                    s.printStackTrace();
                 }
             }
         }
@@ -209,8 +212,17 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    private  void createAttributionEvent(final  String payload) {
-        //TODo
+    private  void createAttributionEvent(final  String payload, final Callback callback) {
+
+        try {
+            final JSONObject jeventPayload = new JSONObject(payload);
+             String eventId = BrandKinesis.getBKInstance().createAttributionEvent(jsonToHashMapString(jeventPayload));
+            if(callback != null)  {
+                callback.invoke(eventId);
+            }
+        } catch (final Exception e) {
+
+        }
     }
 
     /* Profile Module */
@@ -541,6 +553,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
             Bundle bundle = jsonToBundle(new JSONObject(pushData));
             if (!bundle.containsKey("bk")) {return;}
+
             Context context = reactContext.getApplicationContext();
             ApplicationInfo applicationInfo = null;
             String packageName = context.getPackageName();
@@ -785,6 +798,17 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         return data;
     }
 
+    public static HashMap<String, String> jsonToHashMapString(final JSONObject jsonObject) throws JSONException {
+        final HashMap<String, String> data = new HashMap<>();
+
+        final Iterator iter = jsonObject.keys();
+        while (iter.hasNext()) {
+            final String key = (String) iter.next();
+            final String value = jsonObject.getString(key);
+            data.put(key, value);
+        }
+        return data;
+    }
     public static WritableMap convertJsonToMap(JSONObject jsonObject) throws JSONException {
         WritableMap map = new WritableNativeMap();
 

@@ -7,24 +7,20 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
 import com.brandkinesis.BrandKinesis;
-import com.brandkinesis.utils.BKUtilLogger;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -60,11 +56,12 @@ public class UpshotFirebaseMessagingService extends FirebaseMessagingService {
 
             String bkSmallNotificationIcon = null;
             Integer bkSmallNotificationIconColor = null;
-
+            boolean allowForeground = false;
 
             if (metaData != null) {
                 bkSmallNotificationIcon = metaData.getString("UpshotPushSmallIcon");
                 bkSmallNotificationIconColor = metaData.getInt("UpshotPushSmallIconColor");
+                allowForeground = metaData.getBoolean("UpshotAllowForegroundPush");
             }
             if (!TextUtils.isEmpty(bkSmallNotificationIcon)) {
                 Resources resources = context.getResources();
@@ -74,7 +71,7 @@ public class UpshotFirebaseMessagingService extends FirebaseMessagingService {
             if (bkSmallNotificationIconColor != null) {
                 bundle.putInt(BrandKinesis.BK_LOLLIPOP_NOTIFICATION_ICON_BG_COLOR, bkSmallNotificationIconColor);
             }
-            sendPushBundletoBK(bundle, this);
+            sendPushBundletoBK(bundle, this, allowForeground);
         } else {
 
             boolean allow = false;
@@ -161,9 +158,8 @@ public class UpshotFirebaseMessagingService extends FirebaseMessagingService {
             notificationBuilder.setChannelId("notifications");
         }
     }
-    private void sendPushBundletoBK(final Bundle pushBundle, final Context mContext) {
+    private void sendPushBundletoBK(final Bundle pushBundle, final Context mContext, boolean allowPushForeground) {
 
-        final boolean allowPushForeground = true;
         BrandKinesis bkInstance1 = BrandKinesis.getBKInstance();
         bkInstance1.buildEnhancedPushNotification(mContext, pushBundle, allowPushForeground);
     }

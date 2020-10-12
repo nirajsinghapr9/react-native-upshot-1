@@ -33,6 +33,7 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
     public static final String PRIMARY_CHANNEL = "default";
     private static Application application;
     public static Bundle options = null;
+    public static String initType = null;
 
     @Override
     public void onCreate() {
@@ -63,12 +64,13 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
     @Override
     public void onAppComesForeground(Activity activity) {
 
-        try {
-            InputStream inputStream = get().getAssets().open("UpshotConfig.json");
-            initUpshotUsingConfig();
-        } catch (IOException e) {
-            if (options != null) {
-                initUpshotUsingOptions(options);
+        if (initType != null) {
+            if (initType == "Config") {
+                initUpshotUsingConfig();
+            } else if(initType == "Options"){
+                if (options != null) {
+                    initUpshotUsingOptions(options);
+                }
             }
         }
     }
@@ -110,11 +112,12 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
             BrandKinesis.initialiseBrandKinesis(get(), new BKAuthCallback() {
                 @Override
                 public void onAuthenticationError(String errorMsg) {
-                UpshotModule.upshotInitStatus(false, errorMsg);}
-
+                UpshotModule.upshotInitStatus(false, errorMsg);
+                }
                 @Override
                 public void onAuthenticationSuccess() {
-                    UpshotModule.upshotInitStatus(true, ""  );}
+                    UpshotModule.upshotInitStatus(true, ""  );
+                }
             });
         } catch (Exception e) {
         }
@@ -123,11 +126,7 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
     public static void initUpshotUsingOptions(Bundle options) {
 
         setUpshotGlobalCallbak();
-        try {
-            BrandKinesis.initialiseBrandKinesis(get(), options, null);
-        } catch (JSONException e) {
-
-        }
+        BrandKinesis.initialiseBrandKinesis(get(), options, null);
     }
 
     private static void setUpshotGlobalCallbak() {
@@ -154,13 +153,13 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
             }
 
             @Override
-            public void onAuthenticationError(String s) {
-
+            public void onAuthenticationError(String errorMsg) {
+                UpshotModule.upshotInitStatus(false, errorMsg);
             }
 
             @Override
             public void onAuthenticationSuccess() {
-
+                UpshotModule.upshotInitStatus(true, ""  );
             }
 
             @Override
