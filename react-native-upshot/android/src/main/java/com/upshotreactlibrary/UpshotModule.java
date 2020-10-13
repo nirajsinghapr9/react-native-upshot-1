@@ -571,7 +571,9 @@ public class UpshotModule extends ReactContextBaseJavaModule {
                 if (!TextUtils.isEmpty(bkSmallNotificationIcon)) {
                     Resources resources = context.getResources();
                     int resourceId = resources.getIdentifier(bkSmallNotificationIcon, "drawable", packageName);
-                    bundle.putInt(BrandKinesis.BK_LOLLIPOP_NOTIFICATION_ICON, resourceId);
+                    if(resourceId > 0) {
+                        bundle.putInt(BrandKinesis.BK_LOLLIPOP_NOTIFICATION_ICON, resourceId);    
+                    }                    
                 }
                 if (bkSmallNotificationIconColor != null) {
                     bundle.putInt(BrandKinesis.BK_LOLLIPOP_NOTIFICATION_ICON_BG_COLOR, bkSmallNotificationIconColor);

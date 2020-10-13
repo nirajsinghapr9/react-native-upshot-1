@@ -44,8 +44,7 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            registerStatusChannel();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {            
             registerChannel();
         }
         BKAppStatusUtil.getInstance().register(this, this);
@@ -87,24 +86,38 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
 
 
     @TargetApi(Build.VERSION_CODES.O)
-    private void registerStatusChannel() {
-        NotificationChannel channel = new NotificationChannel(
-                "notifications", "Primary Channel", NotificationManager.IMPORTANCE_MIN);
-        channel.setLightColor(Color.GREEN);
-        channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
-        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
-    }
-
-    @TargetApi(Build.VERSION_CODES.O)
     private void registerChannel() {
+        String notificationsChannelId = "notifications";
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        List<NotificationChannel> channels = notificationManager.getNotificationChannels();
+        NotificationChannel existingChanel = null;
+        int count = 0;
+        for (NotificationChannel channel : channels) {
+            String fullId = channel.getId();
+            if (fullId.contains(notificationsChannelId)) {
+                existingChanel = channel;
+                String[] numbers = extractRegexMatches(fullId, "\\d+");
+                if (numbers.length > 0) {
+                    count = Integer.valueOf(numbers[0]);
+                }
+                break;
+            }
+        }
+        if (existingChanel != null) {
+            if (existingChanel.getImportance() < NotificationManager.IMPORTANCE_DEFAULT) {
+                notificationManager.deleteNotificationChannel(existingChanel.getId());
+            }
+        }
+
+        String newId = existingChanel == null ? notificationsChannelId+'_'+(count+1) : existingChanel.getId();
+
         NotificationChannel channel = new NotificationChannel(
-                PRIMARY_CHANNEL, "Primary Channel", NotificationManager.IMPORTANCE_MIN);
+                newId, notificationsChannelId, NotificationManager.IMPORTANCE_HIGH);
         channel.setLightColor(Color.GREEN);
         channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
-        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+        notificationManager.createNotificationChannel(channel);
     }
-
-
 
     public static void initUpshotUsingConfig() {
         try {

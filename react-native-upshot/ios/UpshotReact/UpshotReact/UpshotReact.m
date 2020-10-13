@@ -131,7 +131,7 @@ RCT_EXPORT_METHOD(createAttributionEvent:(NSString *)payload callback:(RCTRespon
     NSString *eventId = nil;
     if (payload && ![payload isEqualToString: @""]) {
         NSDictionary *eventPayload = [UpshotUtility convertJsonStringToJson:payload];
-        NSString *eventId = [[BrandKinesis sharedInstance] createAttributionEvent:eventPayload];
+        eventId = [[BrandKinesis sharedInstance] createAttributionEvent:eventPayload];
     }
     if (callback != nil) {
         if (eventId != nil) {
