@@ -782,8 +782,17 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         final Iterator iter = jsonObject.keys();
         while (iter.hasNext()) {
             final String key = (String) iter.next();
-            final String value = jsonObject.getString(key);
-            bundle.putString(key, value);
+            final Object value = jsonObject.get(key);
+                // predefined
+                if (value instanceof Integer) {
+                    bundle.putInt(key, jsonObject.optInt(key));
+                } else if (value instanceof Float || value instanceof Double) {
+                    bundle.putFloat(key, (float) jsonObject.optDouble(key));
+                } else if (value instanceof Boolean) {
+                    bundle.putBoolean(key, (boolean) jsonObject.optBoolean(key));
+                } else {
+                    bundle.putString(key, jsonObject.optString(key));
+                }
         }
         return bundle;
     }
@@ -794,7 +803,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         final Iterator iter = jsonObject.keys();
         while (iter.hasNext()) {
             final String key = (String) iter.next();
-            final String value = jsonObject.getString(key);
+            final Object value = jsonObject.get(key);
             data.put(key, value);
         }
         return data;
