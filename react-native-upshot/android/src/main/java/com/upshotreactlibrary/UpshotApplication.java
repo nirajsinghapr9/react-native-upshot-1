@@ -24,9 +24,12 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class UpshotApplication extends Application implements BKAppStatusUtil.BKAppStatusListener {
 
@@ -117,6 +120,20 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
         channel.setLightColor(Color.GREEN);
         channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
         notificationManager.createNotificationChannel(channel);
+    }
+
+    public String[] extractRegexMatches(String source, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(source);
+
+        ArrayList<String> matches = new ArrayList<>();
+        while (matcher.find()) {
+            matches.add(matcher.group());
+        }
+
+        String[] result = new String[matches.size()];
+        matches.toArray(result);
+        return result;
     }
 
     public static void initUpshotUsingConfig() {
