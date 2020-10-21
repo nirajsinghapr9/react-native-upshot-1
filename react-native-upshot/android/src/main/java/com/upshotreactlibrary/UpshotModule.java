@@ -9,6 +9,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 
+import android.os.Handler;
 import android.telecom.Call;
 import android.text.TextUtils;
 import android.util.Log;
@@ -761,7 +762,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
     public static void sendPushClickPayload(final String pushPayload) {
         
-        WritableMap payload = Arguments.createMap();
+        final WritableMap payload = Arguments.createMap();
         payload.putString("payload", pushPayload);
         if (reactContext == null) {
             new Handler().postDelayed(new Runnable() {

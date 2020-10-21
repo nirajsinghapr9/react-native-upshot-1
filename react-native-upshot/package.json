@@ -1,7 +1,7 @@
 {
   "name": "react-native-upshotsdk",
   "title": "React Native Upshot",
-  "version": "0.2.9",
+  "version": "0.3",
   "description": "This framework will enable you to track events, send notifications, In-apps messages to your users",
   "main": "index.js",
   "scripts": {
