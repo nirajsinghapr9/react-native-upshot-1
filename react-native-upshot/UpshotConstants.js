@@ -1,7 +1,7 @@
 const UpshotActivityType = {
     any: -1,
     survey: 0,
-    rating: 2,
+    rating: 1,
     opinionPoll: 5,
     tutorials: 7,
     inAppMessage: 8,

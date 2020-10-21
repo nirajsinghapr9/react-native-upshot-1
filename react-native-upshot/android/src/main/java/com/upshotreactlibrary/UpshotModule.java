@@ -545,8 +545,9 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
         }
     }
-
-    @ReactMethod static void displayNotification(final String pushData) {
+    
+    @ReactMethod
+    public static void displayNotification(final String pushData) {
 
         BrandKinesis bkInstance = BrandKinesis.getBKInstance();
         try {
@@ -554,7 +555,12 @@ public class UpshotModule extends ReactContextBaseJavaModule {
             Bundle bundle = jsonToBundle(new JSONObject(pushData));
             if (!bundle.containsKey("bk")) {return;}
 
-            Context context = reactContext.getApplicationContext();
+            Context context = null;
+            if (reactContext == null) {
+                context = UpshotApplication.get();
+            } else {
+                context = reactContext.getApplicationContext();
+            }
             ApplicationInfo applicationInfo = null;
             String packageName = context.getPackageName();
             boolean allowPushForeground = false;
@@ -581,7 +587,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
             } catch (PackageManager.NameNotFoundException e) {
             }
 
-            bkInstance.buildEnhancedPushNotification(reactContext.getApplicationContext(), bundle, allowPushForeground);
+            bkInstance.buildEnhancedPushNotification(context, bundle, allowPushForeground);
         } catch (JSONException e) {
 
         }
@@ -757,7 +763,16 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         
         WritableMap payload = Arguments.createMap();
         payload.putString("payload", pushPayload);
-        emitDeviceEvent("UpshotPushPayload", payload);
+        if (reactContext == null) {
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    emitDeviceEvent("UpshotPushPayload", payload);
+                }
+            }, 1000);
+        } else  {
+            emitDeviceEvent("UpshotPushPayload", payload);
+        }        
     }
 
 
