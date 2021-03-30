@@ -34,6 +34,16 @@ var Upshot = {
     },
 
     /**
+    * Set Dispatch Interval / Frequency
+    *  
+    * @param {Int} interval - Min Value 10sec and Max 120sec
+    *
+    */
+    setDispatchInterval: function(interval) {
+        UpshotReact.setDispatchInterval(interval);
+    },
+
+    /**
     * Create PageView / ScreenView event
     *  
     * @param {string} ScreenName - the current screen name

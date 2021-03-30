@@ -66,6 +66,11 @@ RCT_EXPORT_METHOD(terminate) {
 
 #pragma mark Events
 
+RCT_EXPORT_METHOD(setDispatchInterval:(NSInteger)interval) {
+    
+    [[BrandKinesis sharedInstance] setDispatchInterval:interval];
+}
+
 RCT_EXPORT_METHOD(createPageViewEvent:(NSString *_Nonnull)currentPage callback:(RCTResponseSenderBlock)callback) {
     
     NSString *eventId = nil;

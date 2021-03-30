@@ -100,11 +100,11 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void initializeUpshot() {
-
-        UpshotApplication.initType = "Config";
+        
         if (UpshotApplication.initType == null) {
             UpshotApplication.initUpshotUsingConfig();
         }
+        UpshotApplication.initType = "Config";
     }
 
     @ReactMethod
@@ -127,6 +127,13 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     @ReactMethod
     private void terminate() {
         
+    }
+
+    @ReactMethod
+    private void setDispatchInterval(final int interval) {
+
+        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        bkInstance.setDispatchEventTime(interval * 1000);
     }
     
     /* Events Module */
@@ -751,7 +758,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
     public static void sendRegistrationToServer(String token) {
 
-        if (token.isEmpty()) {
+        if (token == null || token.isEmpty()) {
             return;
         }
         sendDeviceToken(token);        
