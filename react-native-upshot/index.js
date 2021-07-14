@@ -235,18 +235,6 @@ var Upshot = {
 
         UpshotReact.displayNotification(pushPayload);   
     },
-
-    /** 
-    *  Send device based push with custom payload
-    *  
-    * @param {string} pushDetails - push payload like title, message..
-    * @param {function(status)} callback - get the status of push
-    */
-    sendPushNotificationWithDetails: function(pushDetails, callback) {
-
-        UpshotReact.sendPushNotificationWithDetails(pushDetails, callback);
-    },
-
     
     /** 
     *  Disable / delete user as per GDPR

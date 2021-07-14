@@ -23,6 +23,7 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
@@ -56,6 +57,9 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.Callback;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.upshotreactlibrary.upshot.push.UpshotPushAction;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.iid.InstanceIdResult;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -601,25 +605,6 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         }
     }
 
-    @ReactMethod
-    private  void sendPushNotificationWithDetails(final String details) {
-
-        final BrandKinesis bkInstance = BrandKinesis.getBKInstance();
-        try {
-            final JSONObject jPushPayload = new JSONObject(details);
-            bkInstance.sendPushDetails(reactContext.getApplicationContext(), jsonToHashMap(jPushPayload), new BKPushCompletionBlock() {
-                @Override
-                public void onBkPushSent(boolean b) {
-
-                }
-            });
-        } catch (final JSONException e) {
-            if (BuildConfig.DEBUG) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     /* GDPR */
     @ReactMethod
     private void disableUser(final  boolean shouldDisable, final Callback callback) {
@@ -730,8 +715,23 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         WritableMap payload = Arguments.createMap();
         payload.putBoolean("status", isSuccessCallback);
         payload.putString("error", msg);
-        sendRegistrationToServer(FirebaseInstanceId.getInstance().getToken());
+        fetchTokenFromFirebaseSdk();
         emitDeviceEvent("UpshotAuthStatus", payload);
+    }
+
+    private static void fetchTokenFromFirebaseSdk() {
+        FirebaseInstanceId.getInstance().getInstanceId()
+                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                        if (!task.isSuccessful()) {
+                            return;
+                        }
+                        // Get new Instance ID token
+                        String token = task.getResult().getToken();
+                        sendRegistrationToServer(token);
+                    }
+                });
     }
 
     public static void upshotDeeplinkCallback(final BKActivityTypes bkActivityTypes,
@@ -754,6 +754,12 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         WritableMap payload = Arguments.createMap();
         payload.putInt("activityType", bkActivityTypes.getValue());
         emitDeviceEvent("UpshotActivityDidDismiss", payload);
+    }
+
+    public static void upshotCampaignDetailsLoaded() {
+
+        WritableMap payload = Arguments.createMap();
+        emitDeviceEvent("UpshotCampaignDetailsLoaded", payload);
     }
 
     public static void sendRegistrationToServer(String token) {

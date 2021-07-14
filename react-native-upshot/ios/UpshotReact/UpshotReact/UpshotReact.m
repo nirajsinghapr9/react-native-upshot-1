@@ -92,7 +92,7 @@ RCT_EXPORT_METHOD(createCustomEvent:(NSString *_Nonnull)eventName payload:(NSStr
     NSString *eventId = nil;
     if (eventName && ![eventName isEqualToString: @""]) {
         NSDictionary *eventPayload = [UpshotUtility convertJsonStringToJson:payload];
-        NSString *eventId = [[BrandKinesis sharedInstance] createEvent:eventName params:eventPayload isTimed:isTimed];
+        eventId = [[BrandKinesis sharedInstance] createEvent:eventName params:eventPayload isTimed:isTimed];
     }
     if (callback != nil) {
         if (eventId != nil) {
@@ -222,15 +222,6 @@ RCT_EXPORT_METHOD(sendPushDataToUpshot:(NSString *)pushDetails) {
     NSDictionary *payload = [UpshotUtility convertJsonStringToJson:pushDetails];
     [self updatePushResponse:payload];
 }
-
-RCT_EXPORT_METHOD(sendPushNotificationWithDetails:(NSString *)pushDetails callback:(RCTResponseSenderBlock)callback) {
-    
-    NSDictionary *payload = [UpshotUtility convertJsonStringToJson:pushDetails];
-  [[BrandKinesis sharedInstance] sendPushDetails:payload withCompletionBlock:^(BOOL status, NSError * _Nullable error) {
-        callback(@[[NSNumber numberWithBool:status]]);
-  }];
-}
-
 
 #pragma mark GDPR
 
@@ -482,4 +473,13 @@ RCT_EXPORT_METHOD(redeemRewardsForProgram:(NSString *)programId transactionAmoun
     [self sendEventWithName:@"UpshotPushPayload" body:@{@"payload": [UpshotUtility convertJsonObjToJsonString:payload]}];
 }
 
+- (void)brandKinesisCarouselPushClickPayload:(NSDictionary *_Nonnull)payload {
+
+    [self sendEventWithName:@"UpshotCarouselPushClick" body:@{@"payload": [UpshotUtility convertJsonObjToJsonString:payload]}];
+}
+
+- (void)brandkinesisCampaignDetailsLoaded {
+
+    [self sendEventWithName:@"UpshotCampaignDetailsLoaded" body:@{}];
+}
 @end

@@ -17,12 +17,13 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-
+import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 
 import com.brandkinesis.BrandKinesis;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+import com.upshotreactlibrary.UpshotModule;
 
 import java.util.Map;
 
@@ -33,6 +34,12 @@ import java.util.Map;
 public class UpshotFirebaseMessagingService extends FirebaseMessagingService {
 
     private final static String TAG = "BKFBaseMessagingService";
+
+    @Override
+    public void onNewToken(@NonNull String token) {
+        super.onNewToken(token);
+        UpshotModule.sendRegistrationToServer(token);
+    }
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {

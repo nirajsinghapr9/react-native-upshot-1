@@ -166,7 +166,11 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
             public void onActivityError(int i) {
 
             }
-
+            @Override
+            public void brandkinesisCampaignDetailsLoaded() {
+                UpshotModule.upshotCampaignDetailsLoaded();
+            }
+            
             @Override
             public void onActivityCreated(BKActivityTypes bkActivityTypes) {
                 UpshotModule.upshotActivityCreated(bkActivityTypes);
