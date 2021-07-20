@@ -107,6 +107,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         
         if (UpshotApplication.initType == null) {
             UpshotApplication.initUpshotUsingConfig();
+            fetchTokenFromFirebaseSdk();
         }
         UpshotApplication.initType = "Config";
     }
@@ -119,6 +120,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
             try {
                 UpshotApplication.options = jsonToBundle(new JSONObject(options));
                 UpshotApplication.initUpshotUsingOptions(jsonToBundle(new JSONObject(options)));
+                fetchTokenFromFirebaseSdk();
             } catch (JSONException s) {
                 if (BuildConfig.DEBUG) {
                     s.printStackTrace();
@@ -760,17 +762,27 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
         WritableMap payload = Arguments.createMap();
         emitDeviceEvent("UpshotCampaignDetailsLoaded", payload);
-    }
+    }    
 
     public static void sendRegistrationToServer(String token) {
 
-        if (token == null || token.isEmpty()) {
-            return;
+        try {
+            if (token == null) {
+                return;
+            }
+
+            if(token.isEmpty()) {
+                return;
+            }
+            sendDeviceToken(token);
+            WritableMap payload = Arguments.createMap();
+            payload.putString("token", token);
+            emitDeviceEvent("UpshotPushToken", payload);
+        } catch (Exception e) {
+            if (BuildConfig.DEBUG) {
+                e.printStackTrace();
+            }
         }
-        sendDeviceToken(token);        
-        WritableMap payload = Arguments.createMap();
-        payload.putString("token", token);
-        emitDeviceEvent("UpshotPushToken", payload);
     }
 
     public static void sendPushClickPayload(final String pushPayload) {
@@ -785,7 +797,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
                 }
             }, 1000);
         } else  {
-            emitDeviceEvent("UpshotPushPayload", payload);
+            emitDeviceEvent("UpshotPushPayload", payload);            
         }        
     }
 
@@ -810,18 +822,26 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         final Bundle bundle = new Bundle();
         final Iterator iter = jsonObject.keys();
         while (iter.hasNext()) {
-            final String key = (String) iter.next();
-            final Object value = jsonObject.get(key);
+            try {
+                final String key = (String) iter.next();
+                final Object value = jsonObject.get(key);
                 // predefined
-                if (value instanceof Integer) {
-                    bundle.putInt(key, jsonObject.optInt(key));
-                } else if (value instanceof Float || value instanceof Double) {
-                    bundle.putFloat(key, (float) jsonObject.optDouble(key));
-                } else if (value instanceof Boolean) {
-                    bundle.putBoolean(key, (boolean) jsonObject.optBoolean(key));
-                } else {
-                    bundle.putString(key, jsonObject.optString(key));
+                if (value != null) {
+                    if (value instanceof Integer) {
+                        bundle.putInt(key, jsonObject.optInt(key));
+                    } else if (value instanceof Float || value instanceof Double) {
+                        bundle.putFloat(key, (float) jsonObject.optDouble(key));
+                    } else if (value instanceof Boolean) {
+                        bundle.putBoolean(key, (boolean) jsonObject.optBoolean(key));
+                    } else {
+                        bundle.putString(key, jsonObject.optString(key));
+                    }
                 }
+            } catch (JSONException e) {
+                if (BuildConfig.DEBUG) {
+                    e.printStackTrace();
+                }
+            }
         }
         return bundle;
     }
