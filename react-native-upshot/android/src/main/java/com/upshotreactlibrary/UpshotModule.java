@@ -55,7 +55,6 @@ import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.Callback;
-import com.google.firebase.iid.FirebaseInstanceId;
 import com.upshotreactlibrary.upshot.push.UpshotPushAction;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -722,18 +721,25 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     }
 
     private static void fetchTokenFromFirebaseSdk() {
-        FirebaseInstanceId.getInstance().getInstanceId()
-                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+
+        try {
+            FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(new OnCompleteListener<String>() {
                     @Override
-                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                    public void onComplete(@NonNull Task<String> task) {
                         if (!task.isSuccessful()) {
                             return;
                         }
-                        // Get new Instance ID token
-                        String token = task.getResult().getToken();
+
+                        String token = task.getResult();
                         sendRegistrationToServer(token);
                     }
                 });
+        } catch (Exception e) {
+            if (BuildConfig.DEBUG) {
+                e.printStackTrace();
+            }
+        }        
     }
 
     public static void upshotDeeplinkCallback(final BKActivityTypes bkActivityTypes,

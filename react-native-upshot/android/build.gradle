@@ -76,7 +76,7 @@ repositories {
 dependencies {
     //noinspection GradleDynamicVersion
     implementation 'com.facebook.react:react-native:+'  // From node_modules
-    implementation "com.google.firebase:firebase-messaging:${safeExtGet('firebaseMessagingVersion', '20.3.0')}"
+    implementation "com.google.firebase:firebase-messaging:${safeExtGet('firebaseMessagingVersion', '21.1.0')}"
 
     //implementation "com.google.firebase:firebase-analytics:${safeExtGet('firebaseAnalyticsVersion', '17.2.2')}"
     implementation(name: 'BrandKinesis', ext:'aar')
