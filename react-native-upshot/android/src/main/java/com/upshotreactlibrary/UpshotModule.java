@@ -55,6 +55,7 @@ import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.Callback;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.upshotreactlibrary.upshot.push.UpshotPushAction;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
