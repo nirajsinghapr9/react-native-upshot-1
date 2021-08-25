@@ -83,6 +83,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
     public static final String REACT_CLASS = "UpshotReact";
     private static final String TAG = UpshotModule.class.getSimpleName();
     public static ReactApplicationContext reactContext;
+    private static String pushClickPayload = "";
 
     public UpshotModule(final ReactApplicationContext reactContext) {
         super(reactContext);
@@ -710,6 +711,14 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         });
     }
     
+    @ReactMethod
+    public void getPushClickPayload(final Callback callback) {
+
+        if(callback != null)  {
+            callback.invoke(pushClickPayload);
+            pushClickPayload = "";
+        }
+    }
 
     /* Utility Methods */
     public static void upshotInitStatus(boolean isSuccessCallback, String msg) {
@@ -794,6 +803,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
 
     public static void sendPushClickPayload(final String pushPayload) {
         
+        pushClickPayload = pushPayload;
         final WritableMap payload = Arguments.createMap();
         payload.putString("payload", pushPayload);
         if (reactContext == null) {

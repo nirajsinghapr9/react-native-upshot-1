@@ -314,7 +314,11 @@ var Upshot = {
     redeemRewardsForProgram: function(programId, transactionValue, redeemValue, tag, successCallback, failurecallback) {
 
         UpshotReact.redeemRewardsForProgram(programId, transactionValue, redeemValue, tag, successCallback, failurecallback);        
-    },   
+    },  
+    
+    getPushClickPayload:function(callback) {
+        UpshotReact.getPushClickPayload(callback)
+    },
 
     /**
     * Add Upshot event listener
