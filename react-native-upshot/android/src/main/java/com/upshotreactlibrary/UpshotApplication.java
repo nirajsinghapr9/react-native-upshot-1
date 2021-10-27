@@ -7,23 +7,28 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
+import com.brandkinesis.BKUIPrefComponents;
 import com.brandkinesis.BrandKinesis;
 import com.brandkinesis.activitymanager.BKActivityTypes;
 import com.brandkinesis.callback.BKAuthCallback;
 import com.brandkinesis.callback.BrandKinesisCallback;
 import com.brandkinesis.utils.BKAppStatusUtil;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +42,7 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
     private static Application application;
     public static Bundle options = null;
     public static String initType = null;
+    public static Activity mactivity = null;
 
     @Override
     public void onCreate() {
@@ -65,7 +71,7 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
     //BKAppStatusListener Callbacks
     @Override
     public void onAppComesForeground(Activity activity) {
-
+        this.mactivity = activity;
         if (initType != null) {
             if (initType == "Config") {
                 initUpshotUsingConfig();
@@ -75,6 +81,9 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
                 }
             }
         }
+
+
+        applyCustomization();
     }
 
     @Override
@@ -159,8 +168,14 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
         BrandKinesis.initialiseBrandKinesis(get(), options, null);
     }
 
+    private void applyCustomization() {
+
+        BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+      //  bkInstance.setUIPreferences(customUipreferences);
+    }
     private static void setUpshotGlobalCallbak() {
         BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+//        bkInstance.setUIPreferences(customUipreferences);
         bkInstance.setBrandkinesisCallback(new BrandKinesisCallback() {
             @Override
             public void onActivityError(int i) {
@@ -177,8 +192,8 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
             }
 
             @Override
-            public void onActivityDestroyed(BKActivityTypes bkActivityTypes) {
-                UpshotModule.upshotActivityDestroyed(bkActivityTypes);
+            public void onActivityDestroyed(BKActivityTypes bkActivityTypes,HashMap<String, Object> responsePayload) {
+                UpshotModule.upshotActivityDestroyed(bkActivityTypes, responsePayload);
             }
 
             @Override
@@ -227,4 +242,162 @@ public class UpshotApplication extends Application implements BKAppStatusUtil.BK
             }
         });
     }
+
+    BKUIPrefComponents customUipreferences = new BKUIPrefComponents() {
+        BKTriviaCustomization triviaCustomization = new BKTriviaCustomization(get());
+
+        @Override
+        public void setPreferencesForTextView(TextView textView, BKActivityTypes activityType, BKActivityTextViewTypes textViewType) {
+
+            switch (activityType) {
+                case ACTIVITY_TRIVIA:
+                    triviaCustomization.customizeTextView(textViewType, textView);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        @Override
+        public void setPreferencesForImageView(ImageView imageView, BKActivityTypes activityType, BKActivityImageViewType imageType) {
+
+            switch (activityType) {
+                case ACTIVITY_TRIVIA:
+                    triviaCustomization.customizeImageView(imageView, imageType);
+                    break;
+            }
+        }
+
+        @Override
+        public void setPreferencesForOptionsSeparatorView(View view, BKActivityTypes activityTypes) {
+            switch (activityTypes) {
+
+                case ACTIVITY_TRIVIA:
+                    triviaCustomization.customizeForOptionsSeparatorView(view);
+                    break;
+            }
+        }
+
+        @Override
+        public void setCheckBoxRadioSelectorResource(BKUICheckBox checkBox, BKActivityTypes activityType, boolean isCheckBox) {
+            switch (activityType) {
+                case ACTIVITY_TRIVIA:
+                    triviaCustomization.customizeRadioButton(checkBox, isCheckBox);
+                    break;
+            }
+        }
+
+        @Override
+        public void setRatingSelectorResource(List<Bitmap> selectedRatingBitmapList, List<Bitmap> unSelectedRatingBitmapList, BKActivityTypes activityType, BKActivityRatingTypes ratingType) {
+        }
+
+        @Override
+        public void setPreferencesForRelativeLayout(RelativeLayout relativeLayout, BKActivityTypes activityType, BKActivityRelativeLayoutTypes relativeLayoutType, boolean fullScreen) {
+            switch (activityType) {
+                case ACTIVITY_TRIVIA:
+                    triviaCustomization.customizeRelativeLayout(relativeLayoutType, relativeLayout, fullScreen);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        @Override
+        public void setPreferencesForImageButton(ImageButton button, BKActivityTypes activityType, BKActivityImageButtonTypes buttonType) {
+            switch (activityType) {
+                case ACTIVITY_TRIVIA:
+                    triviaCustomization.customizeImageButton(button, buttonType);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        @Override
+        public void setPreferencesForButton(Button button, BKActivityTypes activityType, BKActivityButtonTypes buttonType) {
+            switch (activityType) {
+
+                case ACTIVITY_TRIVIA:
+                    triviaCustomization.customizeButton(button, buttonType);
+                default:
+                    break;
+            }
+        }
+
+        @Override
+        public void setPreferencesForUIColor(BKBGColors color, BKActivityTypes activityType, BKActivityColorTypes colorType) {
+            switch (activityType) {
+
+                case ACTIVITY_TRIVIA:
+                    triviaCustomization.customizeBGColor(color, colorType);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        @Override
+        public void setPreferencesForGraphColor(BKGraphType graphType, List<Integer> colors, BKActivityTypes activityType) {
+            switch (activityType) {
+
+                case ACTIVITY_TRIVIA:
+                    switch (graphType) {
+
+                        case BKACTIVITY_BAR_GRAPH:
+                            colors.add(Color.RED);
+                            colors.add(Color.BLACK);
+                            colors.add(Color.BLUE);
+                            colors.add(Color.GREEN);
+                            colors.add(Color.CYAN);
+                            triviaCustomization.customizeForGraphColor(graphType, colors);
+                            break;
+                        case BKACTIVITY_PIE_GRAPH:
+                            colors.add(Color.RED);
+                            colors.add(Color.BLACK);
+                            colors.add(Color.BLUE);
+                            colors.add(Color.GREEN);
+                            colors.add(Color.CYAN);
+                            triviaCustomization.customizeForGraphColor(graphType, colors);
+                            break;
+                    }
+            }
+        }
+
+        @Override
+        public int getPositionPercentageFromBottom(BKActivityTypes bkActivityType, BKViewType viewType) {
+            switch (bkActivityType) {
+                case ACTIVITY_TUTORIAL:
+                    switch (viewType) {
+                        case BKACTIVITY_PAGINATION_VIEW:
+                            return 0;
+                        case BKACTIVITY_BUTTON_SECTION_VIEW:
+                            return 0;
+                    }
+                    break;
+            }
+            return 0;
+        }
+
+        @Override
+        public void setPreferencesForSeekBar(SeekBar seekBar, BKActivityTypes activityTypes, BKActivitySeekBarTypes bkActivitySeekBarTypes) {
+
+        }
+
+        @Override
+        public void setPreferencesForEditText(EditText editText, BKActivityTypes activityType, BKActivityEditTextTypes editTextTypes) {
+
+        }
+
+        @Override
+        public void setPreferencesForLinearLayout(LinearLayout linearLayout, BKActivityTypes activityType, BKActivityLinearLayoutTypes linearLayoutTypes) {
+            switch (activityType) {
+                case ACTIVITY_TRIVIA:
+                    triviaCustomization.customizeForLinearLayout(linearLayout, linearLayoutTypes);
+                    break;
+            }
+        }
+    };
 }

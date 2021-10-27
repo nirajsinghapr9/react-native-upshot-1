@@ -10,9 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 
 import android.os.Handler;
-import android.telecom.Call;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -33,13 +31,10 @@ import com.brandkinesis.BKUserInfo;
 import com.brandkinesis.BrandKinesis;
 import com.brandkinesis.activitymanager.BKActivityTypes;
 import com.brandkinesis.callback.BKActivityCallback;
-import com.brandkinesis.callback.BKAuthCallback;
 import com.brandkinesis.callback.BKBadgeAccessListener;
 import com.brandkinesis.callback.BKDispatchCallback;
 import com.brandkinesis.callback.BKInboxAccessListener;
-import com.brandkinesis.callback.BKPushCompletionBlock;
 import com.brandkinesis.callback.BKUserInfoCallback;
-import com.brandkinesis.callback.BrandKinesisCallback;
 import com.brandkinesis.callback.BrandKinesisUserStateCompletion;
 import com.brandkinesis.rewards.BKRewardsResponseListener;
 import com.brandkinesis.utils.BKUtilLogger;
@@ -48,26 +43,21 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.bridge.ReadableMap;
-import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.Callback;
 import com.google.firebase.messaging.FirebaseMessaging;
-import com.upshotreactlibrary.upshot.push.UpshotPushAction;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.iid.InstanceIdResult;
+//import com.pt.bksample.activities.PTBaseActivity;
+//import com.pt.bksample.customization.BKSurveyCustomization;
+//import com.pt.bksample.customization.BKTriviaCustomization;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -109,6 +99,8 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         if (UpshotApplication.initType == null) {
             UpshotApplication.initUpshotUsingConfig();
             fetchTokenFromFirebaseSdk();
+
+            initUpshotCustomization(reactContext.getApplicationContext());
         }
         UpshotApplication.initType = "Config";
     }
@@ -122,6 +114,7 @@ public class UpshotModule extends ReactContextBaseJavaModule {
                 UpshotApplication.options = jsonToBundle(new JSONObject(options));
                 UpshotApplication.initUpshotUsingOptions(jsonToBundle(new JSONObject(options)));
                 fetchTokenFromFirebaseSdk();
+                initUpshotCustomization(reactContext.getApplicationContext());
             } catch (JSONException s) {
                 if (BuildConfig.DEBUG) {
                     s.printStackTrace();
@@ -129,6 +122,210 @@ public class UpshotModule extends ReactContextBaseJavaModule {
             }
         }
     }
+
+    private void initUpshotCustomization(final Context applicationContext) {
+
+        BKUIPrefComponents customUipreferences = new BKUIPrefComponents() {
+//            BKTriviaCustomization triviaCustomization = new BKTriviaCustomization(PTBaseActivity.this);
+        BKTriviaCustomization triviaCustomization = new BKTriviaCustomization(applicationContext);
+        BKSurveyCustomization surveyCustomization = new BKSurveyCustomization(applicationContext);
+
+            @Override
+            public void setPreferencesForTextView(TextView textView, BKActivityTypes activityType, BKActivityTextViewTypes textViewType) {
+
+                switch (activityType) {
+                    case ACTIVITY_TRIVIA:
+                        triviaCustomization.customizeTextView(textViewType, textView);
+                        break;
+
+                    case ACTIVITY_SURVEY:
+                        surveyCustomization.customizeTextView(textViewType, textView);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            @Override
+            public void setPreferencesForImageView(ImageView imageView, BKActivityTypes activityType, BKActivityImageViewType imageType) {
+
+                switch (activityType) {
+                    case ACTIVITY_TRIVIA:
+                        triviaCustomization.customizeImageView(imageView, imageType);
+                        break;
+                    case ACTIVITY_SURVEY:
+                        surveyCustomization.customizeImageView(imageView, imageType);
+                        break;
+                }
+            }
+
+            @Override
+            public void setPreferencesForOptionsSeparatorView(View view, BKActivityTypes activityTypes) {
+                switch (activityTypes) {
+
+                    case ACTIVITY_TRIVIA:
+                        triviaCustomization.customizeForOptionsSeparatorView(view);
+                        break;
+                    case ACTIVITY_SURVEY:
+                        surveyCustomization.customizeForOptionsSeparatorView(view);
+                        break;
+                }
+            }
+
+            @Override
+            public void setCheckBoxRadioSelectorResource(BKUICheckBox checkBox, BKActivityTypes activityType, boolean isCheckBox) {
+                switch (activityType) {
+                    case ACTIVITY_TRIVIA:
+                        triviaCustomization.customizeRadioButton(checkBox, isCheckBox);
+                        break;
+                    case ACTIVITY_SURVEY:
+                        surveyCustomization.customizeRadioButton(checkBox, isCheckBox);
+                        break;
+                }
+            }
+
+            @Override
+            public void setRatingSelectorResource(List<Bitmap> selectedRatingBitmapList, List<Bitmap> unSelectedRatingBitmapList, BKActivityTypes activityType, BKActivityRatingTypes ratingType) {
+            }
+
+            @Override
+            public void setPreferencesForRelativeLayout(RelativeLayout relativeLayout, BKActivityTypes activityType, BKActivityRelativeLayoutTypes relativeLayoutType, boolean fullScreen) {
+                switch (activityType) {
+                    case ACTIVITY_TRIVIA:
+                        triviaCustomization.customizeRelativeLayout(relativeLayoutType, relativeLayout, fullScreen);
+                        break;
+
+                    case ACTIVITY_SURVEY:
+                        surveyCustomization.customizeRelativeLayout(relativeLayoutType, relativeLayout, fullScreen);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+
+            @Override
+            public void setPreferencesForImageButton(ImageButton button, BKActivityTypes activityType, BKActivityImageButtonTypes buttonType) {
+                switch (activityType) {
+                    case ACTIVITY_TRIVIA:
+                        triviaCustomization.customizeImageButton(button, buttonType);
+                        break;
+
+                    case ACTIVITY_SURVEY:
+                        surveyCustomization.customizeImageButton(button, buttonType);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+
+            @Override
+            public void setPreferencesForButton(Button button, BKActivityTypes activityType, BKActivityButtonTypes buttonType) {
+                switch (activityType) {
+
+                    case ACTIVITY_TRIVIA:
+                        triviaCustomization.customizeButton(button, buttonType);
+                        break;
+
+                    case ACTIVITY_SURVEY:
+                        surveyCustomization.customizeButton(button, buttonType);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+
+            @Override
+            public void setPreferencesForUIColor(BKBGColors color, BKActivityTypes activityType, BKActivityColorTypes colorType) {
+                switch (activityType) {
+
+                    case ACTIVITY_TRIVIA:
+                        triviaCustomization.customizeBGColor(color, colorType);
+                        break;
+                    case ACTIVITY_SURVEY:
+                        surveyCustomization.customizeBGColor(color, colorType);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+
+            @Override
+            public void setPreferencesForGraphColor(BKGraphType graphType, List<Integer> colors, BKActivityTypes activityType) {
+                switch (activityType) {
+
+                    case ACTIVITY_TRIVIA:
+                        switch (graphType) {
+
+                            case BKACTIVITY_BAR_GRAPH:
+                                colors.add(Color.RED);
+                                colors.add(Color.BLACK);
+                                colors.add(Color.BLUE);
+                                colors.add(Color.GREEN);
+                                colors.add(Color.CYAN);
+                                triviaCustomization.customizeForGraphColor(graphType, colors);
+                                break;
+                            case BKACTIVITY_PIE_GRAPH:
+                                colors.add(Color.RED);
+                                colors.add(Color.BLACK);
+                                colors.add(Color.BLUE);
+                                colors.add(Color.GREEN);
+                                colors.add(Color.CYAN);
+                                triviaCustomization.customizeForGraphColor(graphType, colors);
+                                break;
+                        }
+                }
+            }
+
+            @Override
+            public int getPositionPercentageFromBottom(BKActivityTypes bkActivityType, BKViewType viewType) {
+                switch (bkActivityType) {
+                    case ACTIVITY_TUTORIAL:
+                        switch (viewType) {
+                            case BKACTIVITY_PAGINATION_VIEW:
+                                return 0;
+                            case BKACTIVITY_BUTTON_SECTION_VIEW:
+                                return 0;
+                        }
+                        break;
+                }
+                return 0;
+            }
+
+            @Override
+            public void setPreferencesForSeekBar(SeekBar seekBar, BKActivityTypes activityTypes, BKActivitySeekBarTypes bkActivitySeekBarTypes) {
+
+            }
+
+            @Override
+            public void setPreferencesForEditText(EditText editText, BKActivityTypes activityType, BKActivityEditTextTypes editTextTypes) {
+                switch (activityType) {
+                    case ACTIVITY_SURVEY:
+                        surveyCustomization.customizeEditText(editTextTypes, editText);
+                        break;
+                }
+            }
+
+            @Override
+            public void setPreferencesForLinearLayout(LinearLayout linearLayout, BKActivityTypes activityType, BKActivityLinearLayoutTypes linearLayoutTypes) {
+                switch (activityType) {
+                    case ACTIVITY_TRIVIA:
+                        triviaCustomization.customizeForLinearLayout(linearLayout, linearLayoutTypes);
+                        break;
+                    case ACTIVITY_SURVEY:
+                        surveyCustomization.customizeForLinearLayout(linearLayout, linearLayoutTypes);
+                        break;
+                }
+            }
+        };
+
+        BrandKinesis bkInstance = BrandKinesis.getBKInstance();
+        bkInstance.setUIPreferences(customUipreferences);
+    }
+
 
     /* Terminate Module*/
     @ReactMethod
@@ -327,7 +524,6 @@ public class UpshotModule extends ReactContextBaseJavaModule {
             }
         }
     }
-
     @ReactMethod
     private  void  getUserDetails(final Callback callback) {
 
@@ -360,9 +556,9 @@ public class UpshotModule extends ReactContextBaseJavaModule {
             }
 
             @Override
-            public void onActivityDestroyed(final BKActivityTypes bkActivityTypes) {
+            public void onActivityDestroyed(final BKActivityTypes bkActivityTypes,HashMap<String, Object> responsePayload) {
 
-                upshotActivityDestroyed(bkActivityTypes);
+                upshotActivityDestroyed(bkActivityTypes, responsePayload);
             }
 
             @Override
@@ -389,8 +585,8 @@ public class UpshotModule extends ReactContextBaseJavaModule {
             }
 
             @Override
-            public void onActivityDestroyed(BKActivityTypes bkActivityTypes) {
-                upshotActivityDestroyed(bkActivityTypes);
+            public void onActivityDestroyed(BKActivityTypes bkActivityTypes,HashMap<String, Object> responsePayload) {
+                upshotActivityDestroyed(bkActivityTypes, responsePayload);
             }
 
             @Override
@@ -767,11 +963,13 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         emitDeviceEvent("UpshotActivityDidAppear", payload);
     }
 
-    public static void upshotActivityDestroyed(final BKActivityTypes bkActivityTypes) {
+    public static void upshotActivityDestroyed(final BKActivityTypes bkActivityTypes, HashMap<String, Object> responsePayload) {
 
         WritableMap payload = Arguments.createMap();
         payload.putInt("activityType", bkActivityTypes.getValue());
-        emitDeviceEvent("UpshotActivityDidDismiss", payload);
+
+        payload.putString("payload", mapToJsonString(responsePayload));
+        emitDeviceEvent("UpshotActivityDidDismiss",payload);
     }
 
     public static void upshotCampaignDetailsLoaded() {
@@ -818,6 +1016,21 @@ public class UpshotModule extends ReactContextBaseJavaModule {
         }        
     }
 
+
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public static String mapToJsonString(HashMap<String, Object> bundle){
+
+        JSONObject json = new JSONObject();
+
+        for (Map.Entry<String, Object> entry : bundle.entrySet()) {
+            try {
+                json.put(entry.getKey(), JSONObject.wrap(entry.getValue()));
+            } catch(JSONException e) {
+
+            }
+        }
+        return json.toString();
+    }
 
 @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public static String bundleToJsonString(Bundle bundle){
